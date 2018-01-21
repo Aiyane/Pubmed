@@ -1,7 +1,9 @@
 # coding: utf-8
 import requests
 import re
+from multiprocessing import Pool
 global line
+
 
 def getHTMLText(start_url):#进入最开始页面的函数
     try:
@@ -53,37 +55,45 @@ def callbackfunc(blocknum,blocksize,totalsize):#显示下载进度的函数
         percent = 100
     print("%.2f%%"% percent)
 
-def main():
+def main(line):
     url = 'https://www.ncbi.nlm.nih.gov/pmc/articles/'
-    f = open("C:\\Users\\Administrator\\Desktop\\cuowu3.txt")
-    lines = f.readlines()
-    for line in lines:
-        start_url = url+line
-        start_url = start_url.replace("\n", "")
-        print(start_url)
-        try:
-            html = getHTMLText(start_url)
-            URL = 'https://www.ncbi.nlm.nih.gov' + str(prasePage(html))
-            local = 'D:\\goal\\line.pdf'
-            print(URL)
-            lastStr = URL.rsplit('/', 1)[1]
+    start_url = url+line
+    start_url = start_url.replace("\n", "")
+    print(start_url)
+    try:
+        html = getHTMLText(start_url)
+        URL = 'https://www.ncbi.nlm.nih.gov' + str(prasePage(html))
+        print(URL)
+        lastStr = URL.rsplit('/', 1)[1]
 
 
-            headers = {
-                "Accept": "text/html,application/xhtml+xml,application/xml;",
-                "Accept-Encoding": "gzip",
-                "Accept-Language": "zh-CN,zh;q=0.8",
-                "Referer": URL,
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36"
-            }
-            r = requests.get(URL, headers=headers, timeout=3, stream=True)
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;",
+            "Accept-Encoding": "gzip",
+            "Accept-Language": "zh-CN,zh;q=0.8",
+            "Referer": URL,
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36"
+        }
+        r = requests.get(URL, headers=headers, timeout=3, stream=True)
 
-            with open("D:\\goal\\"+lastStr, "wb") as pdf:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        pdf.write(chunk)
-        except:
-            print("获取失败")
-            with open("C:\\Users\\Administrator\\Desktop\\cuowu4.txt", 'a')as f1:
-                f1.write(line)
-main()
+        with open("D:\\goal\\gg\\"+line+".pdf", "wb") as pdf:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    pdf.write(chunk)
+    except:
+        print("获取失败")
+        with open("C:\\Users\\Administrator\\Desktop\\cuowu4.txt", 'a')as f1:
+            f1.write(line)
+
+
+def getPMC():
+    with open("C:\\Users\\Administrator\\Desktop\\pmcid.txt", "r", encoding="utf8") as fin:
+        for words in fin.readlines():
+            yield words.split()[-1].strip()
+
+if __name__ == '__main__':
+    need_words = tuple(word for word in getPMC())
+    pool = Pool()
+    pool.map(main, need_words)
+    pool.close()
+    pool.join()
