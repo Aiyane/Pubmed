@@ -1,63 +1,96 @@
 # coding: utf-8
 from multiprocessing import Pool
 import re
-import my_token
+import os
+import txt_token
 
 
-def make_word():
-    # 将性状全部存在need_words列表中, 并且去掉首尾空格, 全部转换成小写
-    with open('C:\\Users\\Administrator\\Desktop\\deal\\need.txt', 'r', encoding="utf8") as fin:
+def make_word():  # 全部的基因名字
+    with open('C:\\Users\\Administrator\\Desktop\\other_test\\第二列.txt', 'r', encoding="utf8") as fin:
         for line in fin.readlines():
-            words = line.lower().strip()
-            yield words
+            words = line.lower().strip().split()
+            for word in words:
+                if not re.match(r'Glyma\d{2}[gG]\d+(\.\d*)?', word):
+                    yield word.strip()
+    with open("C:\\Users\\Administrator\\Desktop\\other_test\\第一列.txt", "r", encoding="utf8") as fin:
+        for line in fin.readlines():
+            yield line.strip()
 
 
-# IO操作才是拖慢时间的罪魁祸首!!
-def getLine(tokens, pattern):
-    if_yield = False
-    for token in tokens.children:
-        if isinstance(token, my_token.Content) and pattern.match(token.content.lower()):
-            if_yield = True
-            break
-    return if_yield
+def getXing():
+    for (path, dirs, files) in os.walk("C:\\Users\\Administrator\\Desktop\\PMID"):  # 全部的性状名字
+        for file in files:
+            word = file.split("_")[1][:-4].strip()
+            yield word
+
+need_xing = dict()
+for line in getXing():
+    need_xing[line.lower()] = line
+need_genge = dict()
+for word in make_word():
+    need_genge[word.lower()] = word
 
 
-def getRes(word):
+def getRes(name):
     # path 父目录, dirs 所有文件夹, files所有文件名
     # 元组的速度会快一些, 占用内存小
-
-    pattern = re.compile(r'.*{word}.*$'.format(word=word.strip()))
-    with open("C:\\Users\\Administrator\\Desktop\\summary.txt", "r", encoding="utf8") as fin:
-        AST = my_token.AllDoc(fin)
-    for children in AST.children:
-        if getLine(children, pattern):
-            try:
-                with open("D:\\code\\shuju\\111111\\" + word + ".txt", "a", encoding="utf8") as f:
-                    for token in children.children:
-                        if isinstance(token, my_token.TimeToken):
-                            f.write("时间: "+str(token.time))
-                        elif isinstance(token, my_token.AuthorToken):
-                            f.write("作者: "+str(token.author))
-                        elif isinstance(token, my_token.Content):
-                            reg = re.compile(re.escape(word), re.IGNORECASE)
-                            token.content = reg.sub("关键词>"+word+"<关键词", token.content)
-                            gene_name = re.search(r'(Glyma\d{2}[Gg]\d+(\.\d*)?)', token.content)
-                            if gene_name:
-                                token.content = re.sub(r'(Glyma\d{2}[Gg]\d+(\.\d*)?)', "基因>" +
-                                                       gene_name.group(1) + "<基因", token.content, re.IGNORECASE)
-                            f.write("内容: "+str(token.content))
-                        elif isinstance(token, my_token.IdToken):
-                            f.write("PMID: "+str(token.id))
-                        elif isinstance(token, my_token.TitleToken):
-                            f.write("标题: "+str(token.title))
-                    f.write("\n\n")
-            except IOError:
-                print(word + ".txt读入: " + token.__class__.__name__ + " 出错")
+    Res = []
+    with open("C:\\Users\\Administrator\\Desktop\\处理后的摘要\\"+name, "r", encoding="utf8") as fin:  # 全部的摘要目录
+        xing = name.split("_")[1][:-4].strip()
+        reg = re.compile(re.escape(xing), re.IGNORECASE)
+        need_xing.pop(xing.lower())
+        AST = txt_token.AllDoc(fin)
+        for block in AST.children:
+            for kid in block.children:
+                if isinstance(kid, txt_token.TimeToken):
+                    Res.append("时间: " + kid.content + "\n")
+                elif isinstance(kid, txt_token.IdToken):
+                    Res.append("PMID: "+kid.content + "\n\n")
+                elif isinstance(kid, txt_token.AuthorToken):
+                    Res.append("作者: "+kid.content+"\n")
+                elif isinstance(kid, txt_token.AuthorMessageToken):
+                    continue
+                elif isinstance(kid, txt_token.TitleToken):
+                    words = kid.content.split()
+                    content = []
+                    for word in words:
+                        try:
+                            if need_genge[word.lower()] or re.match(r'Glyma\d{2}[gG]\d+(\.\d*)?', word):
+                                word = "基因>"+word+"<基因"
+                        except KeyError:
+                            try:
+                                if need_xing[word.lower()]:
+                                    word = "关键字>" + word + "<关键字"
+                            except KeyError:
+                                pass
+                        content.append(word)
+                    result = ' '.join(content)
+                    result = reg.sub("关键字>" + xing + "<关键字", result)
+                    Res.append("标题: "+result+"\n")
+                elif isinstance(kid, txt_token.Content):
+                    words = kid.content.split()
+                    content = []
+                    for word in words:
+                        try:
+                            if need_genge[word.lower()] or re.match(r'Glyma\d{2}[gG]\d+(\.\d*)?', word):
+                                word = "基因>" + word + "<基因"
+                        except KeyError:
+                                try:
+                                    if need_xing[word.lower()]:
+                                        word = "关键字>" + word + "<关键字"
+                                except KeyError:
+                                    pass
+                        content.append(word)
+                    result = ' '.join(content)
+                    result = reg.sub("关键字>" + xing + "<关键字", result)
+                    Res.append("内容: " + result + "\n")
+    with open("C:\\Users\\Administrator\\Desktop\\基因_摘要\\"+name, "w", encoding="utf8") as f:  # 摘要结果目录
+        f.write(''.join(Res))
 
 
 if __name__ == '__main__':
-    need_words = tuple(word for word in make_word())
     pool = Pool()
-    pool.map(getRes, need_words)
+    for (path, dirs, files_name) in os.walk("C:\\Users\\Administrator\\Desktop\\处理后的摘要"):  # 全部摘要目录
+        pool.map(getRes, files_name)
     pool.close()
     pool.join()

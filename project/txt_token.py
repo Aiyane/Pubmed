@@ -20,8 +20,11 @@ def tokenizer_line(lines):
             index += 1
         if not begin and line.split(".", 1)[0].isdigit():
             begin = True
-            time = re.split(r",|\.|;|:", line)[2]
-            yield TimeToken(time)
+            try:
+                time = re.split(r",|\.|;|:", line)[2]
+                yield TimeToken(time)
+            except IndexError:
+                pass
         elif not title and index == 2:
             title = True
             yield TitleToken(line.strip())
@@ -47,17 +50,13 @@ def tokenizer_line(lines):
             yield Content(line.strip())
 
 
-def _tokenizer(root=None):
-    with open(
-            "C:\\Users\\Administrator\\Desktop\\处理后的摘要\\高产_yield.txt",
-            "r",
-            encoding="utf8") as f:
-        buffer = []
-        for line in f.readlines():
-            buffer.append(line)
-            if line.startswith("PMID"):
-                yield BlockToken(buffer)
-                buffer.clear()
+def _tokenizer(lines, root=None):
+    buffer = []
+    for line in lines:
+        buffer.append(line)
+        if line.startswith("PMID"):
+            yield BlockToken(buffer)
+            buffer.clear()
 
 
 class BaseToken(object):
@@ -68,13 +67,13 @@ class BaseToken(object):
     @property
     def children(self):
         if isinstance(self._kid, GeneratorType):
-            self.kid = tuple(self._kid)
-        return self.kid
+            self._kid = tuple(self._kid)
+        return self._kid
 
 
 class AllDoc(BaseToken):
-    def __init__(self):
-        self._kid = tuple(line for line in _tokenizer(root=self))
+    def __init__(self, lines):
+        self._kid = tuple(line for line in _tokenizer(lines, root=self))
 
 
 class BlockToken(BaseToken):
