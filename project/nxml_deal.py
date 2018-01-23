@@ -1,4 +1,5 @@
 # coding: utf-8
+# 处理nxml全文, 但是应该改, 程序有问题
 from multiprocessing import Pool
 import re
 import os

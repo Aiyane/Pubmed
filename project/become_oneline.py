@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# 处理摘要, 使摘要变成一行
 
 __author__ = 'Aiyane'
 import re

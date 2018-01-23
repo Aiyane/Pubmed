@@ -1,4 +1,5 @@
 # coding: utf-8
+# 预处理摘要, 将所有摘要变成一颗语法树
 from types import GeneratorType
 import re
 __all__ = [

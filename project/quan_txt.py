@@ -1,4 +1,5 @@
 # coding: utf-8
+# 处理txt的全文, 标注出全部的基因, 标注出全部的性状
 import re
 import os
 

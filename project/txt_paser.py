@@ -1,4 +1,5 @@
 # coding: utf-8
+# 处理摘要语法树, 遍历所有子结点, 用来标注全部的基因, 标注全部的性状
 from multiprocessing import Pool
 import re
 import os
