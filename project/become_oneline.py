@@ -51,7 +51,7 @@ def deal_line(lines):
                 yield (line)
                 temp = ''
             else:
-                temp = temp + line.strip()
+                temp = temp + ' ' + line.strip()
         elif line == '\n':
             yield line
         elif line.find("©") != -1:

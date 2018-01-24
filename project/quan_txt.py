@@ -4,18 +4,11 @@ import re
 import os
 
 
-def make_word():
-    # 将性状全部存在need_words列表中, 并且去掉首尾空格, 全部转换成小写
-    with open('C:\\Users\\Administrator\\Desktop\\other_test\\第二列.txt', 'r', encoding="utf8") as fin:
+def make_word():  # 全部的基因名字
+    with open('C:\\Users\\Administrator\\Desktop\\基因处理\\结果.txt', 'r', encoding="utf8") as fin:
         for line in fin.readlines():
-            words = line.lower().strip().split()
-            for word in words:
-                if not re.match(r'Glyma\d{2}[gG]\d+(\.\d*)?', word):
-                    yield word
-    with open("C:\\Users\\Administrator\\Desktop\\other_test\\第一列.txt", "r", encoding="utf8") as fin:
-        for line in fin.readlines():
-            yield line.strip()
-
+            if not re.match(r'Glyma\d{2}[gG]\d+(\.\d*)?', line):
+                yield line.strip()
 
 def getXing():
     for (path, dirs, files) in os.walk("C:\\Users\\Administrator\\Desktop\\PMID"):

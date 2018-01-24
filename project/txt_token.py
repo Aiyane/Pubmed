@@ -1,4 +1,5 @@
 # coding: utf-8
+
 # 预处理摘要, 将所有摘要变成一颗语法树
 from types import GeneratorType
 import re
@@ -54,7 +55,7 @@ def tokenizer_line(lines):
 def _tokenizer(lines, root=None):
     buffer = []
     for line in lines:
-        buffer.append(line)
+        buffer.append(line.replace("<or", "< "))
         if line.startswith("PMID"):
             yield BlockToken(buffer)
             buffer.clear()
