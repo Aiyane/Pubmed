@@ -1,121 +1,94 @@
-# coding: utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# _txt_token.py
 
-# 预处理摘要, 将所有摘要变成一颗语法树
+__author__ = 'Aiyane'
 from types import GeneratorType
 import re
-__all__ = [
-    'AllDoc', 'BlockToken', 'TimeToken', 'TitleToken', 'AuthorToken',
-    'Content', 'IdToken'
-]
 
 
-def tokenizer_line(lines):
+def _tokenizer_line(lines):
+    block_begin = False
     index = 0
-    info = False
-    begin = False
-    tem = ''
-    title = False
-    author = False
 
     for line in lines:
         if line != '\n':
             index += 1
         if not begin and line.split(".", 1)[0].isdigit():
-            begin = True
+            block_begin = True
             try:
-                time = re.split(r",|\.|;|:", line)[2]
-                yield TimeToken(time)
+                yield TimeToken("时间:" + re.split(r",|\.|;|:", line)[2])
             except IndexError:
                 pass
-        elif not title and index == 2:
-            title = True
-            yield TitleToken(line.strip())
-        elif not author and index == 3:
-            author = True
-            yield AuthorToken(line.strip())
+        elif index == 2:
+            yield TitleToken("标题:" + line.strip())
+        elif index == 3:
+            yield AuthorToken("作者:" + line.strip())
         elif line.startswith("Author information"):
-            info = True
-        elif info:
+            info_fence = True
+        elif info_fence:
             if line == '\n':
-                info = False
-                yield AuthorMessageToken(tem.strip())
-                tem = ''
-            else:
-                tem = tem + line
+                info_fence = False
         elif line.startswith("PMID:"):
-            ID = line.split(":")[1].strip()
-            begin = False
-            yield IdToken(ID)
-        elif line.startswith("PMCID") or line.startswith("DOI"):
+            yield IDToken(line.strip())
+        elif line.startswith("PMCID") or line.startswith("DOT"):
             continue
         elif line != '\n':
-            yield Content(line.strip())
+            yield ContentToken("摘要:" + line.strip())
 
 
-def _tokenizer(lines, root=None):
+class TimeToken(object):
+    def __index__(self, content):
+        self.content = content
+
+
+class TitleToken(object):
+    def __init__(self, content):
+        self.content = content
+
+
+class AuthorToken(object):
+    def __init__(self, content):
+        self.content = content
+
+
+class IDToken(object):
+    def __init__(self, content):
+        self.content = content
+
+
+class ContentToken(object):
+    def __init__(self, content):
+        self.content = content
+
+
+def _tokenizer(lines):
     buffer = []
     for line in lines:
-        if line.strip().startswith("[Article"):
-            continue
-        line = line.replace(">", "&gt;")
-        buffer.append(line.replace("<", "&lt;"))
-        if line.startswith("PMID"):
+        if line.startswith("PMID") and len(buffer) > 1:
             yield BlockToken(buffer)
             buffer.clear()
+        elif line.strip().startswith("[Article") == -1:
+            line = line.replace(">", "&gt;")
+            buffer.append(line.replace("<", "&lt;"))
 
 
-class BaseToken(object):
-    def __init__(self, token, func):
+class BlockToken(object):
+    def __init__(self, lines):
+        self.kid = tuple(
+            token for token in _tokenizer_line(lines) if token is not None)
+
+
+class AllDoc(object):
+    def __init__(self, lines):
+        """
+        基础文档类
+        """
         self._kid = tuple(
-            children for children in func(token) if children is not None)
+            token for token in _tokenizer(lines) if token is not None)
 
     @property
-    def children(self):
+    def kid(self):
         if isinstance(self._kid, GeneratorType):
             self._kid = tuple(self._kid)
         return self._kid
-
-
-class AllDoc(BaseToken):
-    def __init__(self, lines):
-        self._kid = tuple(line for line in _tokenizer(lines, root=self))
-
-
-class BlockToken(BaseToken):
-    def __init__(self, lines):
-        self._kid = tuple(line for line in tokenizer_line(lines))
-
-
-class TimeToken(BaseToken):
-    def __init__(self, content):
-        self.content = content
-
-
-class TitleToken(BaseToken):
-    def __init__(self, title):
-        self.content = title
-
-
-class AuthorToken(BaseToken):
-    def __init__(self, message):
-        self.content = message
-
-
-class Content(BaseToken):
-    def __init__(self, content):
-        self.content = content
-
-
-class IdToken(BaseToken):
-    def __init__(self, ID):
-        self.content = ID
-
-
-class AuthorMessageToken(BaseToken):
-    def __init__(self, message):
-        self.content = message
-
-
-# _token_type = [AllDoc, BlockToken, TimeToken, TitleToken, AuthorToken, Content, IdToken]
-# AST = AllDoc()
-# print(AST)
