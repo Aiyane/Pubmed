@@ -36,23 +36,28 @@
     ...
 
 运行说明:
-    1. 将all_xing_file改成所有性状的文件路径, 里面的性状是一行一个
-    2. 将all_gene_file改成所有基因的路径, 里面的基因是一行一个
-    3. 将input_path改成你的nxml文件根目录, 注意看上面注释!!! 其子目录的格式要求
-    4. 将output_path改成你的输出路径, 提示: 最好是空目录
-    5. 将需要删除的pmid添加到need_del_pmid集合中去
-    6. 改完以后点击运行即可
+    1. 在data.py中将all_xing_file改成所有性状的文件路径, 里面的性状是一行一个
+    2. 在data.py中将all_gene_file改成所有基因的路径, 里面的基因是一行一个
+    3. 在data.py中将input_path改成你的nxml文件根目录, 注意看上面注释!!! 其子目录的格式要求
+    4. 在data.py中将output_path改成你的输出路径, 提示: 最好是空目录
+    5. 在data.py中将需要删除的pmid添加到need_del_pmid集合中去
+    6. 改完以后点击运行 run.py 即可
 """
 from nxml_paser import getRes
 import os
+from data import output_path, input_path
+from functools import partial
+from multiprocessing import Pool
 
-all_xing_file = "C:\\Users\\Administrator\\Desktop\\全部性状.txt"
-all_gene_file = "C:\\Users\\Administrator\\Desktop\\基因处理\\geneprimary.set.txt"
-input_path = "D:\\我的文档\\xing"
-output_path = "D:\\我的文档\\res"
-need_del_pmid = {'10947181', '29305230', '29287393', '27794206', '26601587', '18096944', '29293767', '29290449',
-                 '28562076', '28938771', '28709434', '28496985', '28373120', '27822738', '27746355', '27718430'}
 
-for (path, dirs, files_name) in os.walk(input_path):
-    for dir in dirs:
-        getRes(path, dir, output_path)
+# for (path, dirs, files_name) in os.walk(input_path):
+#     for dir in dirs:
+#         getRes(path, dir, output_path)
+
+if __name__ == '__main__':
+    pool = Pool()
+    for (path, dirs, files_name) in os.walk(input_path):
+        getRes = partial(getRes, path=path, goal=output_path)
+        pool.map(getRes, dirs)
+    pool.close()
+    pool.join()

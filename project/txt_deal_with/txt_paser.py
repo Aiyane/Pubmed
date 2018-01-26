@@ -3,47 +3,46 @@
 # _txt_paser.py
 
 __author__ = 'Aiyane'
-
-import re
-import string
-
 import txt_token
 from gene_word import deal_word
-from run import output_path, need_del_pmid
+from data import output_path, need_del_pmid
 
 
-def getRes(path, file):
+def getRes(file, path):
     fin_res = []
-    AST = None
-    with open(path+"\\"+file, "r", encoding="utf8") as fin:
-        AST = _txt_token.AllDoc(fin.read())
-    
+    with open(path + "\\" + file, "r", encoding="utf8") as fin:
+        AST = txt_token.AllDoc(fin)
+
     for block in AST.kid:
-        _res = deal_block(block, file)+"\n"
+        _res = deal_block(block, file)
         if _res is not None:
-            fin_res.append(_res)
-    
-    with open(output_path, "w", encoding="utf8") as f:
+            fin_res.append(_res + "\n")
+
+    with open(output_path+"\\"+file[:-4].strip()+".txt", "w", encoding="utf8") as f:
         f.write(''.join(fin_res))
-    
+
+
 def deal_block(block, file):
     Res = []
     for token in block.kid:
-        if isinstance(token, _txt_token.AuthorToken):
-            Res.append(token.content+'\n')
-        elif isinstance(token, _txt_token.IDToken:
-            if token.content.split(":")[1].strip() in need_del_pmid:
+        if isinstance(token, txt_token.AuthorToken):
+            Res.append(token.content + '\n')
+        elif isinstance(token, txt_token.IDToken):
+            _res = token.content.split(":")[1].strip()
+            if _res.split()[0].strip() in need_del_pmid:
                 return None
-            Res.append(token.content+'\n')
-        elif isinstance(token, _txt_token.TimeToken):
-            Res.append(token.content+'\n')
-        elif isinstance(token, _txt_token.TitleToken):
+            Res.append(token.content + '\n')
+        elif isinstance(token, txt_token.TimeToken):
+            Res.append(token.content + '\n')
+        elif isinstance(token, txt_token.TitleToken):
             words = token.content[3:].split()
             content = deal_word(words, file[:-4], True)
-            Res.append("标题:"+content+"\n")
-        elif isinstance(token, _txt_token.ContentToken):
-            words = toekn.content[3:].split()
+            Res.append("标题:" + content + "\n")
+        elif isinstance(token, txt_token.ContentToken):
+            words = token.content[3:].strip().split()
             content = deal_word(words, file[:-4])
-            if "基" in content and "关" in content:
-                Res.append("摘要:"+content+'\n')
-    return ''.join(Res)
+            Res.append("内容:" + content + '\n')
+            if "基" not in ''.join(Res) or "关" not in ''.join(Res):
+                return None
+    if "基" in ''.join(Res) and "关" in ''.join(Res):
+        return ''.join(Res)

@@ -9,20 +9,26 @@ import re
 
 def _tokenizer_line(lines):
     block_begin = False
+    info_fence = False
     index = 0
+    title_fence = False
+    author_fence = False
 
     for line in lines:
-        if line != '\n':
+        if line != '\n' and line != '':
             index += 1
-        if not begin and line.split(".", 1)[0].isdigit():
+        if not block_begin and line.split(".", 1)[0].isdigit():
             block_begin = True
             try:
-                yield TimeToken("时间:" + re.split(r",|\.|;|:", line)[2])
+                line = re.split(r",|\.|;|:", line)
+                yield TimeToken("时间:" + line[2].strip())
             except IndexError:
                 pass
-        elif index == 2:
+        elif not title_fence and index == 2:
+            title_fence = True
             yield TitleToken("标题:" + line.strip())
-        elif index == 3:
+        elif not author_fence and index == 3:
+            author_fence = True
             yield AuthorToken("作者:" + line.strip())
         elif line.startswith("Author information"):
             info_fence = True
@@ -31,14 +37,14 @@ def _tokenizer_line(lines):
                 info_fence = False
         elif line.startswith("PMID:"):
             yield IDToken(line.strip())
-        elif line.startswith("PMCID") or line.startswith("DOT"):
+        elif line.startswith("PMCID") or line.startswith("DOI"):
             continue
         elif line != '\n':
-            yield ContentToken("摘要:" + line.strip())
+            yield ContentToken("内容:" + line.strip())
 
 
 class TimeToken(object):
-    def __index__(self, content):
+    def __init__(self, content):
         self.content = content
 
 
@@ -66,9 +72,10 @@ def _tokenizer(lines):
     buffer = []
     for line in lines:
         if line.startswith("PMID") and len(buffer) > 1:
+            buffer.append(line)
             yield BlockToken(buffer)
             buffer.clear()
-        elif line.strip().startswith("[Article") == -1:
+        elif not line.strip().startswith("[Article"):
             line = line.replace(">", "&gt;")
             buffer.append(line.replace("<", "&lt;"))
 

@@ -5,14 +5,14 @@ import re
 
 import nxml_token
 from gene_word import deal_word
-from run import need_del_pmid
+from data import need_del_pmid
 
 
 def init_deal(text):
     return re.split(r'(?s)(<.*?>)', text)
 
 
-def getRes(path, dir, goal):
+def getRes(dir, path, goal):
     fin_res = []
     files = os.listdir(path+"\\"+dir)
     for file in files:

@@ -2,7 +2,7 @@
 # 用来匹配基因, 关键字的模块
 import re
 import string
-from run import all_xing_file, all_gene_file
+from data import all_xing_file, all_gene_file
 
 
 def getXing():
