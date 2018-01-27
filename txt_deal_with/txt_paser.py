@@ -18,7 +18,9 @@ def getRes(file, path):
         if _res is not None:
             fin_res.append(_res + "\n")
 
-    with open(output_path+"\\"+file[:-4].strip()+".txt", "w", encoding="utf8") as f:
+    with open(
+            output_path + "\\" + file[:-4].strip() + ".txt", "w",
+            encoding="utf8") as f:
         f.write(''.join(fin_res))
 
 
@@ -39,10 +41,14 @@ def deal_block(block, file):
             content = deal_word(words, file[:-4], True)
             Res.append("标题:" + content + "\n")
         elif isinstance(token, txt_token.ContentToken):
-            words = token.content[3:].strip().split()
-            content = deal_word(words, file[:-4])
-            Res.append("内容:" + content + '\n')
-            if "基" not in ''.join(Res) or "关" not in ''.join(Res):
-                return None
-    if "基" in ''.join(Res) and "关" in ''.join(Res):
-        return ''.join(Res)
+            for line in token.content:
+                line = line.split()
+                _content = deal_word(line, file[:-4])
+                if "基" not in _content or "关" not in _content:
+                    continue
+                else:
+                    Res.append("内容:" + _content + '.\n')
+
+    result = ''.join(Res)
+    if "基" in result and "关" in result:
+        return result

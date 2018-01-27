@@ -70,7 +70,6 @@ def _tokenizer(lines, root=None):
             buffer.append("作者:")
             fence = True
         elif line.startswith('<p>'):
-            buffer.append("内容")
             fence = True
 
 
@@ -112,7 +111,9 @@ class AuthorToken(object):
 
 class ContentToken(object):
     def __init__(self, lines):
-        self.content = ' '.join(lines)
+        content = ' '.join(lines)
+        content = content.split(".")
+        self.content = content
 
 # if __name__ == '__main__':
 #     import re

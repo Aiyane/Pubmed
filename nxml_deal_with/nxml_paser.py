@@ -39,10 +39,11 @@ def getRes(dir, path, goal):
                     content = deal_word(words, dir, True)
                     Res.append("标题:"+content+"\n")
                 elif isinstance(token, nxml_token.ContentToken):
-                    words = token.content[3:].split()
-                    content = deal_word(words, dir)
-                    if "基" in content and "关" in content:
-                        Res.append("内容:"+content+"\n")
+                    for line in token.content:
+                        line = line.split()
+                        _content = deal_word(line, dir)
+                        if "基" in _content and "关" in _content:
+                            Res.append("内容:"+_content+".\n")
 
         if if_jump:
             continue

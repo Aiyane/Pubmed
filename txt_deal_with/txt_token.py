@@ -40,7 +40,7 @@ def _tokenizer_line(lines):
         elif line.startswith("PMCID") or line.startswith("DOI"):
             continue
         elif line != '\n':
-            yield ContentToken("内容:" + line.strip())
+            yield ContentToken(line.strip())
 
 
 class TimeToken(object):
@@ -65,6 +65,7 @@ class IDToken(object):
 
 class ContentToken(object):
     def __init__(self, content):
+        content = content.split(".")
         self.content = content
 
 
