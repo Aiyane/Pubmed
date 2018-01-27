@@ -49,7 +49,15 @@ class Render(object):
         article = dict()
         my_con = []
         my_all = []
+        _main = ''
+        _begin = True
         for line in lines:
+            if _begin and line.startswith("正文"):
+                _main = line.split(":", 1)[1].strip()
+                _begin = False
+            elif line.startswith("内容") and _main != '':
+                if _main[:50] == line.split(":", 1)[1].strip()[:50]:
+                    article["main"].pop(0)
             for k in self.my_dict.keys():
                 if line.startswith(k):
                     cstring = line.split(":", 1)[1].strip()
