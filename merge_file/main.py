@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # main.py
 """
-模块功能:
+模块功能: 将全文nxml处理文件合并到响应的摘要txt处理文件后, 然后将pmid相同的摘要与全文归并一起
 """
 __author__ = 'Aiyane'
 import os
@@ -20,7 +20,8 @@ def _tokenizer(lines):
 
 class AllDoc(object):
     def __init__(self, lines):
-        self.kid = tuple(token for token in _tokenizer(lines) if token is not None)
+        self.kid = tuple(
+            token for token in _tokenizer(lines) if token is not None)
         self.PMID = dict()
         for token in self.kid:
             try:
@@ -28,7 +29,9 @@ class AllDoc(object):
                     self.PMID[token._pmid] = token
                 else:
                     token.summary = self.PMID[token._pmid].content
-                    _content = [line.replace("内容", "正文") for line in token.content]
+                    _content = [
+                        line.replace("内容", "正文") for line in token.content
+                    ]
                     token.content = _content
                     self.PMID[token._pmid] = token
             except AttributeError:
@@ -57,6 +60,18 @@ class Block(object):
                 _pmid = line.split(":")[1].strip().split()[0].strip()
                 self._pmid = _pmid
 
+
+for (path, dirs, files) in os.walk("D:\\我的文档\\res"):
+    for file in files:
+        Res = []
+        with open(path + "\\" + file, "r", encoding="utf8") as fin:
+            for line in fin.readlines():
+                Res.append(line)
+        with open(
+                "C:\\Users\\Administrator\\Desktop\\基因_摘要\\" + file,
+                "a",
+                encoding="utf8") as f:
+            f.write(''.join(Res))
 
 AST = None
 for (path, dirs, files) in os.walk("C:\\Users\\Administrator\\Desktop\\基因_摘要"):
@@ -87,5 +102,8 @@ for (path, dirs, files) in os.walk("C:\\Users\\Administrator\\Desktop\\基因_�
                     Res.append(''.join(token.summary))
             Res.append("\n")
 
-        with open("C:\\Users\\Administrator\\Desktop\\合并后的内容\\"+file, "w", encoding="utf8") as f:
+        with open(
+                "C:\\Users\\Administrator\\Desktop\\合并后的内容\\" + file,
+                "w",
+                encoding="utf8") as f:
             f.write(''.join(Res))

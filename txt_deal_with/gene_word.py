@@ -41,6 +41,14 @@ def deal_word(words, dir, is_title=False):
         xings = ['seed', 'glycinin', 'beta-conglycinin', 'content']
 
     need_xing.pop(_name.lower())
+
+    # 首先将性状全部匹配了, 因为有空格, 而单词是按空格切分的, 之后会匹配不到, 这两行位置不能错了
+    words = ' '.join(words)
+    for __xing in need_xing.keys():
+        re.sub(re.escape(__xing), "关键字>"+__xing+"<关键字", words, 0, re.IGNORECASE)
+    words = words.split()
+
+
     for _xing in xings:
         try:
             need_xing[_xing.lower()] = _xing
