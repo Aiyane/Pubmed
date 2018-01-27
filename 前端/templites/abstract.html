@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>{{name}}</title>
+	<style type="text/css">
+		.gene {
+			background-color: #CCCCFF
+		}
+
+		.trait {
+			background-color: yellow
+		}
+
+		body {
+			margin: 30px
+		}
+	</style>
+	<SCRIPT>
+		function isHidden(oDiv) {
+			var vDiv = document.getElementById(oDiv);
+			vDiv.style.display = (vDiv.style.display == 'none') ? 'block' : 'none';
+		}
+	</SCRIPT>
+</head>
+
+<body>
+	<h1>{{name}}</h1>
+	<br/>
+	<div>
+		{% for article in genge %}
+
+			{# 公用部分 #}
+			<h2>文献标题:{{ article.title }}</h2>
+			<h3>PMID:{{ article.pmid }}</h3>
+				{% if article.if_full %}
+					<h3>PMCID:{{ article.pmcid }}</h3>
+					<h4>期刊:{{ article.jou }}</h4>
+				{% endif %}
+
+				{% if article.if_all %}
+					<h3>PMCID:{{ article.pmcid }}</h3>
+					<h4>期刊:{{ article.jou }}</h4>
+				{% endif %}
+			<p>
+				作者：{{ article.author }}
+				<br/> 
+				年份：{{ article.time }}
+				<br/>
+			</p>
+			<br/> 
+			
+			{# 如果是摘要 #}
+			{% if article.if_summ %}
+				<h2>摘要</h2>
+				{% for my_content in article.content %}
+					<p>&nbsp;&nbsp;
+						{{ my_content }}
+					</p>
+				{% endfor %}
+			{% endif %}
+
+			{# 如果是全文 #}
+			{% if article.if_full %}
+				<h2>正文</h2>
+				{% for my_content in article.content %}
+					<p>&nbsp;&nbsp;
+						{{ my_content }}
+					</p>
+				{% endfor %}
+			{% endif %} 
+			
+			{# 如果都有 #}
+			{% if article.if_all %}
+				<h2>摘要</h2>
+				{% for my_content in article.content %}
+					<p>&nbsp;&nbsp;
+						{{ my_content }}
+					</p>
+				{% endfor %}
+				<h2>正文</h2>
+				{% for my_content in article.main %}
+					<p>&nbsp;&nbsp;
+						{{ my_content }}
+					</p>
+				{% endfor %}
+			{% endif %}
+
+			<hr/> 
+		{% endfor %}
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style type="text/css">
+        span {
+            color: rebeccapurple;
+        }
+        body {
+            margin: 10px
+        }
+        div {
+            margin:10px;
+        }
+        .Num0 {
+            background: yellow;
+        }
+    </style>
+    <title>Document Retrieval System</title>
+</head>
+
+<body>
+    <h1 align="center">首页</h1>
+    <div style="float: left;">
+        {% for xings in Res %}
+            <div style="float:left; width: 440px">
+                <h2>{{ xings.lei }}</h2>
+                <hr/>
+                {% for artcle in xings.xing %}
+	                <a href="./HTML/{{ artcle.url }}" target="_blank" class="Num{{ artcle.num }}">{{ artcle.name }}</a><span class="Num{{ artcle.num }}">({{ artcle.num }}篇)</span>
+	                <br/>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</body>
+
+</html>
