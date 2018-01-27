@@ -1,4 +1,11 @@
-# coding: utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# copy_file_to_bottom.py
+"""
+模块功能: 合并全文nxml处理后的文件和摘要txt处理后的文件
+"""
+__author__ = 'Aiyane'
+
 
 import os
 
