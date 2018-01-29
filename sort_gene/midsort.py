@@ -4,7 +4,7 @@
 # 2018-01-28 20:34
 #
 import os
-
+from multiprocessing import Pool
 
 def read_mid(path):
     """
