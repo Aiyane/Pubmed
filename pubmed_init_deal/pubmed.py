@@ -219,7 +219,7 @@ class OneFilePubmud(dict):
         if not article:
             print("没有%r对应的文章" % primary)
         else:
-            return article.get[key]
+            return article.get(key)
 
     def yield_element(self, primarys, _element="标题", need_pmid=False):
         """
@@ -241,13 +241,14 @@ class OneFilePubmud(dict):
             primarys = tuple(primarys, )
 
         for primary in primarys:
-            value = self.get_value(primarys, element)
+            value = self.get_value(primary, element)
             if not value:
-                print("没有得到%r文章的%r属性" % primary, _element)
+                print("没有得到%r文章的%r属性" % (primary, _element))
             # 如果需要主键信息
-            if need_pmid:
-                value = primarys + ": " + value
-            yield value
+            elif need_pmid:
+                value = primary + ": " + '\n'.join(value)
+            if value:
+                yield value
 
     def yield_content(self, pmids, need_pmid=False):
         """
