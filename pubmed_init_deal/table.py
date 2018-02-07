@@ -1,12 +1,19 @@
+# coding: utf-8
+"""
+用来生成主页的数据表
+"""
 import os
 from templite import Templite
 
-fs = os.listdir("C:/Users/Administrator/Desktop/表")
+# 这是数据表的那11列数据的文件夹
+path = "C:/Users/Administrator/Desktop/表"
+
+fs = os.listdir(path)
 
 my = {}
 for i, f in enumerate(fs):
     tem = []
-    with open("C:/Users/Administrator/Desktop/表/"+f, "r", encoding="utf8") as fin:
+    with open(path+"/"+f, "r", encoding="utf8") as fin:
         for line in fin.readlines():
             tem.append(line.strip())
     my.update({i: tem})
@@ -24,5 +31,6 @@ tem = Templite(html)
 res = tem.render({
     "LL": LL
 })
+
 with open("D:/我的文档/Documents/GitHub/Pubmed/pubmed_init_deal/index.html", "w", encoding="utf8") as fou:
     fou.write(res)

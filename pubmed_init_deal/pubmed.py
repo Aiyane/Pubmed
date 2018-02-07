@@ -27,6 +27,7 @@
     summary.get_title()  # 通过pmid获取标题, 用法同摘要
     summary.get_time()  # 通过pmid获取时间, 用法同摘要
     summary.get_journal()  # 通过pmid获取期刊, 用法同摘要
+    # 以上函数都有第三个参数, 接收布尔值, 表明是否需要将"{pmid}: "作为开头一同返回, 即 key: value 格式返回
     
     summary['15067400']  # 显示一篇文章的全部信息
     
@@ -89,6 +90,42 @@ from wrappers import MultiDict
 import os
 
 
+def add_path_info_to_article(file_path, article):
+    """
+    给文章增加路径属性
+    :param file_path: 文件路径
+    :param article: 文章, MultiDict类型
+    :retuen: 文章
+    """
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError("该%r文件不存在!" % file_path)
+    if not isinstance(article, MultiDict):
+        raise TypeError("文章%r必须为MutiDict类型" % article)
+
+    if "/" in file_path:
+        file_name = file_path.split("/")[-1]  # 文件名
+    else:
+        file_name = file_path.split("\\")[-1]
+
+    no_dot_file_name = ''.join(file_name.split(".")[:-1])  # 无后缀文件名
+
+    article.add("path", file_path)
+    article.add("file_name", file_name)
+    if "." in file_name:  # 如果有后缀增加无后缀文件名属性
+        article.add("no_dot_file_name", no_dot_file_name)
+    return article
+
+
+def get_key_value_by_line(line):
+    if not isinstance(line, str):
+        raise TypeError("%r 必须是str类型" % line)
+
+    if line.strip() == "" or ":" not in line:
+        return None, None
+    key, value = line.strip().split(":", 1)
+    return key, value
+
+
 class OneFilePubmud(dict):
     def __init__(self, path, save_file_name=False):
         """
@@ -100,121 +137,124 @@ class OneFilePubmud(dict):
             dict.__init__(self, ((k, l) for k, l in path.items()))
         elif isinstance(path, dict):
             dict.__init__(self, path)
-
         elif isinstance(path, str):
             if not os.path.isfile(path):
-                raise FileNotFoundError("该路径不存在文件!")
-
-            file_name = path.split("/")[-1]
-            no_dot_file_name = ''.join(file_name.split(".")[:-1])
-
-            _temp = MultiDict()
-            try:
-                with open(path, "r", encoding="utf8") as f:
-                    for _line in f.readlines():
-                        try:
-                            key, value = _line.strip().split(":", 1)
-                        except ValueError:
-                            key = None
-                        if key:
-                            _temp.add(key, value)
-                        elif _line == "\n" and _temp:
-
-                            if save_file_name:  # 如果是处理多文件, 添加此属性
-                                _temp.add("path", path)
-                                _temp.add("file_name", file_name)
-                                _temp.add("no_dot_file_name", no_dot_file_name)
-                            pmid_key = _temp.get("PMID")
-
-                            # 如果pmcid存在, 说明是有正文的, 但是正文也是以"内容"为关键字, 有摘要的才是以"正文"为关键字
-                            pmc = _temp.get("PMCID", None)
-                            if pmc:
-                                content = _temp.get("正文")
-                                if not content:
-                                    _content_ = _temp.poplist("内容")
-                                    _temp.add("正文", _content_)
-
-                            if pmid_key:  # 没有pmid号的都不要
-                                pmid_key = pmid_key[0].strip().split()[0]  # 这里是为了得到纯数字字符串
-                                self[pmid_key] = _temp
-                            _temp = MultiDict()
-            except IOError:
-                raise IOError("该文件不可读")
-
+                raise FileNotFoundError("该路径%r不存在文件!" % path)
+            self._init_deal_path(path, save_file_name)
             if not save_file_name:  # 如果父类调用来处理多文件, 不应该添加此属性
                 self["path"] = path
-                self["file_name"] = file_name
-                self["no_dot_file_name"] = no_dot_file_name
-
+                if "/" in path:
+                    self["file_name"] = path.split("/")[-1]  # 文件名
+                else:
+                    self["file_name"] = path.split("\\")[-1]
+                if "." in self["file_name"]:
+                    self["no_dot_file_name"] = ''.join(self["file_name"].split(".")[:-1])  # 无后缀文件名
         else:
             raise TypeError("初始化参数确保是以下之一"
                             "1. 文件路径字符串类型"
                             "2. OneFilePubmud类型"
                             "3. dict类型")
-        
-    def yield_element(self, pmids, element="标题", need_pmid=False):
+
+    def _init_deal_path(self, path, save_file_name):
+        """save_file_name为布尔值"""
+        if not os.path.isfile(path):
+            raise FileNotFoundError("该%r文件不存在!" % path)
+        with open(path, "r", encoding="utf8") as f:
+            lines = f.readlines()
+
+        article = MultiDict()
+        for line in lines:
+            key, varlue = get_key_value_by_line(line)
+            if key:
+                article.add(key, varlue)
+            elif article:
+                if save_file_name:  # 如果是处理多文件, 添加额外的文件属性
+                    article = add_path_info_to_article(path, article)
+                self.save_article(article)
+                article = MultiDict()
+
+    def save_article(self, article):
+        """默认用pmid为主键, pmid不存在用pmcid为主键, 都不存在就不保存"""
+        if not isinstance(article, MultiDict):
+            raise TypeError("保存文章出错, 文章%r必须为MultiDict类型" % article)
+
+        pmid_key = article.get("PMID")
+        pmc = article.get("PMCID")
+
+        # 如果pmcid存在, 说明是有正文的, 只有摘要的是没有pmcid的, 摘要是以"内容"为关键词
+        # 麻烦的就是, 如果正文摘要都存在, 那么正文的关键词会是"正文"
+        # 但是只有正文时, 正文的关键词是"内容", 与摘要一样了, 所以要把它改成正文
+        # 这里相当的蛋疼, 就是因为最开始的关键词命名有问题, 现在一直在加这种莫名奇妙的补丁
+        if pmc:
+            content = article.get("正文")
+            if not content:
+                _content_ = article.poplist("内容")
+                article.add("正文", _content_)
+        # =============================================================================
+
+        if pmid_key:
+            primary_key = pmid_key[0].strip().split()[0]  # 这里是为了得到纯数字字符串
+            self.add_article(primary_key, article)
+        elif pmc:
+            primary_key = pmc[0].strip().split()[0]
+            self.add_article(primary_key, article)
+        else:
+            print("文章没有主键, 保存失败")
+
+    def add_article(self, key, value):
+        """
+        增加PubMed文章的方法
+        :param key: 主键
+        :param value: 文章内容, 为MultiDict类型
+        """
+        if not isinstance(value, MultiDict):
+            raise ValueError("确保值的类型为MultiDict")
+        if self.get(key):
+            print("原始文章的内容已被替换")
+        self[key] = value
+
+    def get_value(self, primary, key):
+        """通过主键和key来获取key对应的value"""
+        article = self.get(primary)
+        if not article:
+            print("没有%r对应的文章" % primary)
+        else:
+            return article.get[key]
+
+    def yield_element(self, primarys, _element="标题", need_pmid=False):
         """
         若传参为list或tuple或set
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
-            pmids: list, tuple, set, str
+            primarys: 任意类型
             return: list
         """
-        if element == "摘要":  # 保持接口正确
+
+        # 又是为了那个蛋疼的命名问题
+        if _element == "摘要":  # 保持接口正确
             element = "内容"
-        if isinstance(pmids, (list, tuple, set)):
-            _error = {}
-            _pmid = []
-            for pmid in pmids:
-                res = self.get(pmid)
-                if res and pmid not in _pmid:
-                    _res = res.get(element)
-                    if _res:
-                        if need_pmid:
-                            _res = pmid + ": " + ''.join(_res)
-                        yield _res
-                    else:
-                        _value = _error.get(pmid)
-                        if _value:
-                            _error["Error: " + pmid][0] += 1
-                            _error["Error: " + pmid].append("该文章没有" + element)
-                        else:
-                            _error["Error: " + pmid] = [0, "该文章没有" + element]
-                        print("Error: " + pmid)
-                        print(_error["Error: " + pmid])
-                        yield "Error: " + pmid
-                else:
-                    _value = _error.get(pmid)
-                    if _value:
-                        _error["Error: " + pmid][0] += 1
-                    elif res:
-                        _error["Error: " + pmid] = [1]
-                    else:
-                        _error["Error: " + pmid] = [0, "没有该文章"]
-                    print("Error: " + pmid)
-                    print(_error["Error: " + pmid])
-                    yield "Error: " + pmid
-                _pmid.append(pmid)
-        elif isinstance(pmids, str):
-            res = self.get(pmids)
-            if res:
-                _res = res.get(element)
-                if _res:
-                    if need_pmid:
-                        _res = pmids + ": " + ''.join(_res)
-                    yield _res
-                else:
-                    raise AttributeError("该文章没有" + element)
-            else:
-                raise AttributeError("没有该PMID的文章")
         else:
-            raise TypeError("PMID类型错误! 确保是字符串")
-    
+            element = _element
+        # ======================
+
+        if not isinstance(primarys, (list, tuple, set)):
+            primarys = tuple(primarys, )
+
+        for primary in primarys:
+            value = self.get_value(primarys, element)
+            if not value:
+                print("没有得到%r文章的%r属性" % primary, _element)
+            # 如果需要主键信息
+            if need_pmid:
+                value = primarys + ": " + value
+            yield value
+
     def yield_content(self, pmids, need_pmid=False):
         """
         若传参为list或tuple或set
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
+        :param need_pmid: 
         :param pmids: 
         :return: 
         """
@@ -225,6 +265,7 @@ class OneFilePubmud(dict):
         若传参为list或tuple或set
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
+        :param need_pmid: 
         :param pmids: 
         :return: 
         """
@@ -367,7 +408,7 @@ class MultiFilePubmud(OneFilePubmud):
             all_files = os.listdir(path)
             for file in all_files:
                 if file.endswith(".txt"):
-                    _tem = OneFilePubmud(path+"/"+file, True)
+                    _tem = OneFilePubmud(path + "/" + file, True)
                     self.update(_tem)
         else:
             raise TypeError("初始化参数确保是以下之一"
