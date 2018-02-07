@@ -10,10 +10,18 @@ def _tokenizer(lines, root=None):
     time_close = True
     title_close = True
     author_close = True
+    zai_close = True
+    is_zai = True
     buffer = []
     for line in lines:
         if fence:
-            if line.startswith('</article-id>'):
+            if line.startswith('</abstract>'):
+                yield ZaiToken(buffer)
+                buffer.clear()
+                fence = False
+                is_zai = True
+                continue
+            elif line.startswith('</article-id>'):
                 yield IDToken(buffer)
                 buffer.clear()
                 fence = False
@@ -38,13 +46,18 @@ def _tokenizer(lines, root=None):
                 buffer.clear()
                 fence = False
                 continue
-            elif line.startswith('</p>'):
+            elif is_zai and line.startswith('</p>'):
                 yield ContentToken(buffer)
                 buffer.clear()
                 fence = False
                 continue
             buffer.append(line)
-            
+
+        elif zai_close and line.startswith('<abstract>'):
+            zai_close = False
+            buffer.append("内容:")
+            fence = True
+            is_zai = False
         elif pmc_close and line.startswith('<article-id pub-id-type="pmc">'):
             buffer.append("PMCID:")
             pmc_close = False
@@ -115,9 +128,23 @@ class ContentToken(object):
         content = content.split(".")
         self.content = content
 
+
+class ZaiToken(object):
+    def __init__(self, lines):
+        self.content = ' '.join(lines)
+
 # if __name__ == '__main__':
-#     import re
-#     with open("D:\\我的文档\\xing\\高产_Branching\\20661290.nxml", "r", encoding="utf8") as fin:
-#         lines = re.split(r'(?s)(<.*?>)', fin.read())
-#         AST = AllDoc(lines)
-#         print(AST)
+#     import re, os
+#     all_file = os.listdir("C:\\Users\\Administrator\\Desktop\\nxml全文")
+#     for file in all_file:
+#         zai = False
+#         with open("C:\\Users\\Administrator\\Desktop\\nxml全文\\"+file, "r", encoding="utf8") as fin:
+#             lines = re.split(r'(?s)(<.*?>)', fin.read())
+#             AST = AllDoc(lines)
+#         with open("C:\\Users\\Administrator\\Desktop\\nxml_res\\"+file, "w", encoding="utf8") as f:
+#             for token in AST.kid:
+#                 if isinstance(token, ZaiToken):
+#                     f.write(token.content)
+#                     zai = True
+#         if not zai:
+#             print(file)

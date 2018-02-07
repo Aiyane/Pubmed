@@ -13,7 +13,7 @@ my_dict为摘要的关键字与模板的变量名对照字典
 
 """
 
-path = "C:\\Users\\Administrator\\Desktop\\sorted"
+path = "C:\\Users\\Administrator\\Desktop\\fin_res"
 detail_model = 'abstract.html'
 index_model = 'Document.html'
 

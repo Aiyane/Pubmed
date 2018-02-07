@@ -8,8 +8,8 @@
     5. 在data.py中将需要删除的pmid添加到need_del_pmid集合中去
     6. 改完以后运行 run.py 即可
 """
-input_path = "D:\\我的文档\\xing"
-output_path = "D:\\我的文档\\res"
+input_path = "C:\\Users\\Administrator\\Desktop\\nxml全文"
+output_path = "C:\\Users\\Administrator\\Desktop\\nxml_res"
 all_xing_file = "C:\\Users\\Administrator\\Desktop\\全部性状.txt"
 all_gene_file = "C:\\Users\\Administrator\\Desktop\\基因处理\\geneprimary.set.txt"
 need_del_pmid = {'26601587', '25108862', '22863090', '21854937', '18177482', '18096944', '17297112', '16960068',

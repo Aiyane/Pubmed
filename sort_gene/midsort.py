@@ -6,6 +6,7 @@
 import os
 from multiprocessing import Pool
 
+
 def read_mid(path):
     """
     读取中间结果

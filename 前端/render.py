@@ -100,9 +100,9 @@ class Render(object):
             _content = []
             for line in fin.readlines():
                 _content.append(line)
-                if line == "\n" and len(_content) > 1:
-                    self.genge.append(self.__getArticle(_content))
-                    _content.clear()
+                # if line == "\n" and len(_content) > 1:
+                #     self.genge.append(self.__getArticle(_content))
+                #     _content.clear()
             if len(_content) > 1:
                 self.genge.append(self.__getArticle(_content))
                 _content.clear()
@@ -125,7 +125,8 @@ class Render(object):
         _lei = ''
         for file in self.files:
             _articles = dict()
-            _name = file.split("_")[1][:-4].strip()
+            # _name = file.split("_")[1][:-4].strip()
+            _name = file.split(".", 1)[0]
             lei = file.split("_")[0]
             if lei != _lei and _lei != '':
                 _xings.update({"xing": _xing, "lei": _lei})
@@ -153,7 +154,8 @@ class Render(object):
         """
         _length = dict()
         for file in self.files:
-            name = file.split("_")[1][:-4].strip()
+            # name = file.split("_")[1][:-4].strip()
+            name = file.split(".", 1)[0]
             self.__getRes(file)
             _length.update({name: len(self.genge)})
             self.__render(self.loc + "\\HTML\\" + name + ".html", {
