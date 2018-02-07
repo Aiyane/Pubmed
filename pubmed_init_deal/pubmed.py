@@ -88,6 +88,8 @@ MultiFilePubmud类的用法与OneFilePubmud的用法基本一致, 区别在于�
 """
 from wrappers import MultiDict
 import os
+from init_txt import deal_line
+import warnings
 
 
 def add_path_info_to_article(file_path, article):
@@ -117,6 +119,11 @@ def add_path_info_to_article(file_path, article):
 
 
 def get_key_value_by_line(line):
+    """
+    通过一行文字, 得到这行对应的key和value, 没有得到就返回None, None
+    :param line: 一行文字
+    :return: key和value
+    """
     if not isinstance(line, str):
         raise TypeError("%r 必须是str类型" % line)
 
@@ -126,11 +133,17 @@ def get_key_value_by_line(line):
     return key, value
 
 
+class NotPrimaryException(AttributeError):
+    """没有主键的错误"""
+    pass
+
+
 class OneFilePubmud(dict):
     def __init__(self, path, save_file_name=False):
         """
-        初始化一个文件成一个OnedFilePubmud类
-        :param path: Pubmud文件的绝对路径
+        一个Pubmed摘要文件的处理类
+        :param path: 摘要文件
+        :param save_file_name: 是否每篇文章都保存此文章的路径属性
         """
 
         if isinstance(path, OneFilePubmud):
@@ -156,25 +169,34 @@ class OneFilePubmud(dict):
                             "3. dict类型")
 
     def _init_deal_path(self, path, save_file_name):
-        """save_file_name为布尔值"""
+        """
+        处理path路径下的文章初始化
+        :param path: 文件路径
+        :param save_file_name: 为布尔值
+        """
         if not os.path.isfile(path):
             raise FileNotFoundError("该%r文件不存在!" % path)
-        with open(path, "r", encoding="utf8") as f:
-            lines = f.readlines()
 
         article = MultiDict()
-        for line in lines:
+        # for line in lines:
+        for line in deal_line(path):
             key, varlue = get_key_value_by_line(line)
             if key:
                 article.add(key, varlue)
             elif article:
                 if save_file_name:  # 如果是处理多文件, 添加额外的文件属性
                     article = add_path_info_to_article(path, article)
-                self.save_article(article)
+                try:
+                    self.save_article(article)
+                except NotPrimaryException as msg:
+                    warnings.warn("在" + path + "路径下,", msg)
                 article = MultiDict()
 
     def save_article(self, article):
-        """默认用pmid为主键, pmid不存在用pmcid为主键, 都不存在就不保存"""
+        """
+        保存文章, 默认用pmid为主键, pmid不存在用pmcid为主键, 都不存在就不保存
+        :param article: MultiDict类型
+        """
         if not isinstance(article, MultiDict):
             raise TypeError("保存文章出错, 文章%r必须为MultiDict类型" % article)
 
@@ -185,11 +207,11 @@ class OneFilePubmud(dict):
         # 麻烦的就是, 如果正文摘要都存在, 那么正文的关键词会是"正文"
         # 但是只有正文时, 正文的关键词是"内容", 与摘要一样了, 所以要把它改成正文
         # 这里相当的蛋疼, 就是因为最开始的关键词命名有问题, 现在一直在加这种莫名奇妙的补丁
-        if pmc:
-            content = article.get("正文")
-            if not content:
-                _content_ = article.poplist("内容")
-                article.add("正文", _content_)
+        # if pmc:
+        #     content = article.get("正文")
+        #     if not content:
+        #         _content_ = article.poplist("内容")
+        #         article.add("正文", _content_)
         # =============================================================================
 
         if pmid_key:
@@ -199,7 +221,7 @@ class OneFilePubmud(dict):
             primary_key = pmc[0].strip().split()[0]
             self.add_article(primary_key, article)
         else:
-            print("文章没有主键, 保存失败")
+            raise NotPrimaryException("文章没有主键, 保存失败")
 
     def add_article(self, key, value):
         """
@@ -210,32 +232,25 @@ class OneFilePubmud(dict):
         if not isinstance(value, MultiDict):
             raise ValueError("确保值的类型为MultiDict")
         if self.get(key):
-            print("原始文章的内容已被替换")
+            warnings.warn("原始文章的内容已被替换")
         self[key] = value
 
     def get_value(self, primary, key):
         """通过主键和key来获取key对应的value"""
         article = self.get(primary)
         if not article:
-            print("没有%r对应的文章" % primary)
+            warnings.warn("没有%r对应的文章" % primary)
         else:
             return article.get(key)
 
-    def yield_element(self, primarys, _element="标题", need_pmid=False):
+    def yield_element(self, primarys, element="标题", need_pmid=False):
         """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
-            primarys: 任意类型
-            return: list
+        生成器, 生成文章具体信息
+            primarys: 主键, 可以是可迭代对象
+            element: 需要得到文章的某个信息如"标题", 默认为"标题"
+            need_pmid: 布尔型, 是否需要用pmid作为头信息返回
+            return: list, 值都是用list返回的
         """
-
-        # 又是为了那个蛋疼的命名问题
-        if _element == "摘要":  # 保持接口正确
-            element = "内容"
-        else:
-            element = _element
-        # ======================
 
         if not isinstance(primarys, (list, tuple, set)):
             primarys = tuple(primarys, )
@@ -243,7 +258,7 @@ class OneFilePubmud(dict):
         for primary in primarys:
             value = self.get_value(primary, element)
             if not value:
-                print("没有得到%r文章的%r属性" % (primary, _element))
+                warnings.warn("没有得到%r文章的%r属性" % (primary, element))
             # 如果需要主键信息
             elif need_pmid:
                 value = primary + ": " + '\n'.join(value)

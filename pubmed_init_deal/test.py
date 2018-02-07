@@ -1,18 +1,11 @@
 # coding: utf-8
-from pubmed import MultiFilePubmud
+from pubmed import OneFilePubmud, MultiFilePubmud
 
-pmid_file_path = "C:/Users/Administrator/Desktop/new_id.txt"
-init_path = "C:/Users/Administrator/Desktop/合并后的内容"
-output_path = "C:/Users/Administrator/Desktop/new_output.txt"
+# 原生Pubmed的Abstract摘要文件的路径
+init_path = "C:/Users/Administrator/Desktop/摘要/高产_Photoperiod sensitivity.txt"
+# 很多Pubmed摘要文件的文件夹路径
+path = "C:/Users/Administrator/Desktop/摘要"
 
-PMID = set()
-with open(pmid_file_path, "r", encoding="utf8") as fin:
-    for line in fin.readlines():
-        PMID.add(line.strip())
-
-print(len(PMID))
-root = MultiFilePubmud(init_path)
-res = root.get_summary(PMID, True)
-
-with open(output_path, "w", encoding="utf8") as f:
-    f.write('\n\n'.join(res))
+# 以下是例子, text_root和root就是可操作的对象了
+text_root = OneFilePubmud(init_path)
+root = MultiFilePubmud(path)
