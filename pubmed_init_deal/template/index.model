@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Index</title>
+	<script src="./js/jquery.js"></script>
+	<script type="text/javascript">
+		(function($){
+			$.fn.tableUI = function(options){
+				var defaults = {
+					evenRowClass:"evenRow",
+					oddRowClass:"oddRow",
+					activeRowClass:"activeRow",
+					clickRowClass:"clickRow"
+				}
+				var options = $.extend(defaults, options);
+				this.each(function(){
+					var thisTable = $(this);
+					$(thisTable).find("tr:even").addClass(options.evenRowClass);
+					$(thisTable).find("tr:odd").addClass(options.oddRowClass);
+					$(thisTable).find("tr").bind("mouseover",function(){
+						$(this).removeClass(options.clickRowClass).addClass(options.activeRowClass);
+					});
+					$(thisTable).find("tr").bind("mouseout",function(){
+						$(this).removeClass(options.clickRowClass).removeClass(options.activeRowClass);
+					});
+					$(thisTable).find("tr").bind("click",function(){
+						$(this).addClass(options.clickRowClass);
+					});
+				});
+			};
+		})(jQuery);
+		$(function(){
+			$(".table_solid").tableUI();
+		});
+	</script>
+	<style>
+		.evenRow{ background-color: #F7FDEA; }
+		.oddRow{background-color: #FFFFFF;}
+		.activeRow{background-color: #FFFF99;}
+		.clickRow{background-color: #CCCCFF;}
+
+		*
+		{
+			margin:0;
+			padding:0;
+		}
+		body
+		{ background: #f9f9f9; color: #000; text-shadow: 1px 2px 1px #FFFFFF; font-family: "微软雅黑"; font-size: 14px; }
+
+		.table_solid { border-bottom: 1px solid #CCCCCC; border-right: 1px solid #CCCCCC; position: relative; width: 600px; margin: 20px auto; text-align: center; }
+
+		.table_solid th,.table_solid td{ border-left: 1px solid #CCCCCC; border-top: 1px solid #CCCCCC; color: #333333; padding: 0.5em; }
+		.table_solid th{ background-color: #DFF9FF; }
+	</style>
+</head>
+<body>
+	<table class="table_solid">
+	  <tr>	  													
+		  <th>PMID</th>
+		  <th>PMCID</th>
+		  <th>TITLE</th>
+		  <th>ADSTRACT</th>
+		  <th>AUTHOR</th>
+		  <th>TIME</th>
+		  <th>HOME</th>
+		  <th>PTHER</th>
+		  <th>DOI</th>
+	  </tr>
+	  {% for article in articles %}
+		  <tr>
+			  <td>{{ article.to_str_pmid }}</td>
+			  <td>{{ article.to_str_pmcid }}</td>
+			  <td>{{ article.to_str_title }}</td>
+			  <td><a href="./HTML/{{ article.to_str_pmid }}.html" target="_blank">摘要</a></td>
+			  <td>{{ article.to_str_author }}</td>
+			  <td>{{ article.to_str_time }}</td>
+			  <td>{{ article.to_str_home }}</td>
+			  <td>{{ article.to_str_other }}</td>
+			  <td>{{ article.to_str_doi }}</td>
+		  </tr>
+	  {% endfor %}
+	</table>
+</body>
+</html>

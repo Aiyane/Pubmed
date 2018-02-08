@@ -465,9 +465,9 @@ class OneFilePubmud(dict):
                 or not os.path.exists(os.getcwd() + "/template/summary_model.html"):
             raise FileNotFoundError("模板丢失!")
 
-        with open(os.getcwd() + "/template/index_model.html", "r", encoding="utf8") as fin:
+        with open(os.getcwd() + "/template/index.model", "r", encoding="utf8") as fin:
             index_html = fin.read()
-        with open(os.getcwd() + "/template/summary_model.html", "r", encoding="utf8") as fin:
+        with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
             summary_html = fin.read()
         index_tem = Templite(index_html)
         summary_tem = Templite(summary_html)
