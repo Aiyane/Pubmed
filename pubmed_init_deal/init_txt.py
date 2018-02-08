@@ -25,6 +25,10 @@ def init_txt(file_path):
 
 
 def deal_line(file_path):
+    """
+    关键字: DOI, PMCID, PMID, 时间, 标题, 住址, 作者, 信息, 摘要, 其他
+    :param file_path: 文件路径
+    """
     count = 0
     jump_title = False
     for line in init_txt(file_path):
@@ -33,6 +37,8 @@ def deal_line(file_path):
             yield line.strip()
             count = 0
         elif line.startswith("PMID"):
+            line = line.split(":", 1)[1].strip()
+            line = "PMID:" + line.split()[0]
             yield line.strip()
             count = 0
             yield "\n"

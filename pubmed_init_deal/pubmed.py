@@ -90,19 +90,59 @@ from wrappers import MultiDict
 import os
 from init_txt import deal_line
 import warnings
+from templite import Templite
+
+
+class Article(MultiDict):
+    
+    def to_str(self, key):
+        res = self.get(key)
+        if res:
+            return ''.join(res)
+        return ""
+        
+    def to_str_pmid(self):
+        return self.to_str("PMID")
+    
+    def to_str_pmcid(self):
+        return self.to_str("PMCID")
+
+    def to_str_title(self):
+        return self.to_str("标题")
+
+    def to_str_summary(self):
+        return self.to_str("摘要")
+
+    def to_str_time(self):
+        return self.to_str("时间")
+        
+    def to_str_home(self):
+        return self.to_str("地址")
+
+    def to_str_author(self):
+        return self.to_str("作者")
+
+    def to_str_other(self):
+        return self.to_str("其他")
+
+    def to_str_doi(self):
+        return self.to_str("DOI")
+
+    def to_str_msg(self):
+        return self.to_str("信息")
 
 
 def add_path_info_to_article(file_path, article):
     """
     给文章增加路径属性
     :param file_path: 文件路径
-    :param article: 文章, MultiDict类型
+    :param article: 文章, Article类型
     :retuen: 文章
     """
     if not os.path.isfile(file_path):
         raise FileNotFoundError("该%r文件不存在!" % file_path)
-    if not isinstance(article, MultiDict):
-        raise TypeError("文章%r必须为MutiDict类型" % article)
+    if not isinstance(article, Article):
+        raise TypeError("文章%r必须为Article类型" % article)
 
     if "/" in file_path:
         file_name = file_path.split("/")[-1]  # 文件名
@@ -145,7 +185,6 @@ class OneFilePubmud(dict):
         :param path: 摘要文件
         :param save_file_name: 是否每篇文章都保存此文章的路径属性
         """
-
         if isinstance(path, OneFilePubmud):
             dict.__init__(self, ((k, l) for k, l in path.items()))
         elif isinstance(path, dict):
@@ -155,13 +194,13 @@ class OneFilePubmud(dict):
                 raise FileNotFoundError("该路径%r不存在文件!" % path)
             self._init_deal_path(path, save_file_name)
             if not save_file_name:  # 如果父类调用来处理多文件, 不应该添加此属性
-                self["path"] = path
+                self.path = path
                 if "/" in path:
-                    self["file_name"] = path.split("/")[-1]  # 文件名
+                    self.file_name = path.split("/")[-1]  # 文件名
                 else:
-                    self["file_name"] = path.split("\\")[-1]
-                if "." in self["file_name"]:
-                    self["no_dot_file_name"] = ''.join(self["file_name"].split(".")[:-1])  # 无后缀文件名
+                    self.file_name = path.split("\\")[-1]
+                if "." in self.file_name:
+                    self.no_dot_file_name = ''.join(self.file_name.split(".")[:-1])  # 无后缀文件名
         else:
             raise TypeError("初始化参数确保是以下之一"
                             "1. 文件路径字符串类型"
@@ -177,7 +216,7 @@ class OneFilePubmud(dict):
         if not os.path.isfile(path):
             raise FileNotFoundError("该%r文件不存在!" % path)
 
-        article = MultiDict()
+        article = Article()
         # for line in lines:
         for line in deal_line(path):
             key, varlue = get_key_value_by_line(line)
@@ -190,15 +229,15 @@ class OneFilePubmud(dict):
                     self.save_article(article)
                 except NotPrimaryException as msg:
                     warnings.warn("在" + path + "路径下,", msg)
-                article = MultiDict()
+                article = Article()
 
     def save_article(self, article):
         """
         保存文章, 默认用pmid为主键, pmid不存在用pmcid为主键, 都不存在就不保存
-        :param article: MultiDict类型
+        :param article: Article类型
         """
-        if not isinstance(article, MultiDict):
-            raise TypeError("保存文章出错, 文章%r必须为MultiDict类型" % article)
+        if not isinstance(article, Article):
+            raise TypeError("保存文章出错, 文章%r必须为Article类型" % article)
 
         pmid_key = article.get("PMID")
         pmc = article.get("PMCID")
@@ -227,10 +266,10 @@ class OneFilePubmud(dict):
         """
         增加PubMed文章的方法
         :param key: 主键
-        :param value: 文章内容, 为MultiDict类型
+        :param value: 文章内容, 为Article类型
         """
-        if not isinstance(value, MultiDict):
-            raise ValueError("确保值的类型为MultiDict")
+        if not isinstance(value, Article):
+            raise ValueError("确保值的类型为Article")
         if self.get(key):
             warnings.warn("原始文章的内容已被替换")
         self[key] = value
@@ -241,19 +280,38 @@ class OneFilePubmud(dict):
         if not article:
             warnings.warn("没有%r对应的文章" % primary)
         else:
+            if isinstance(key, (list, tuple, set)):
+                return [''.join(article.get(one)) for one in key]
             return article.get(key)
+
+    def yield_all(self, element="标题", need_pmid=False):
+        if not isinstance(need_pmid, bool):
+            raise TypeError("第二个参数必须为bool值")
+
+        for primary in self.keys():
+            yield self.get_element(primary, element, need_pmid)
+
+    def get_all(self, element="标题", need_pmid=False):
+        if not isinstance(need_pmid, bool):
+            raise TypeError("第二个参数必须为bool值")
+
+        tem = []
+        for value in self.yield_all(element, need_pmid):
+            tem.append('\n'.join(value))
+        return tem
 
     def yield_element(self, primarys, element="标题", need_pmid=False):
         """
         生成器, 生成文章具体信息
-            primarys: 主键, 可以是可迭代对象
-            element: 需要得到文章的某个信息如"标题", 默认为"标题"
-            need_pmid: 布尔型, 是否需要用pmid作为头信息返回
-            return: list, 值都是用list返回的
+        :param primarys: 主键, 可以是单个主键或者多个主键的list, tuple, set
+        :param element: 需要获得的类型, 默认为"标题", 可以是多个类型的list, tuple, set
+        :param need_pmid: 是否需要以PMID为前缀, bool型
+        :return: 以列表形式返回
         """
-
+        if not isinstance(need_pmid, bool):
+            raise TypeError("need_pmid参数必须为bool型")
         if not isinstance(primarys, (list, tuple, set)):
-            primarys = tuple(primarys, )
+            primarys = [primarys]
 
         for primary in primarys:
             value = self.get_value(primary, element)
@@ -261,9 +319,25 @@ class OneFilePubmud(dict):
                 warnings.warn("没有得到%r文章的%r属性" % (primary, element))
             # 如果需要主键信息
             elif need_pmid:
-                value = primary + ": " + '\n'.join(value)
+                value = [primary + ": " + '\n'.join(value)]
             if value:
                 yield value
+
+    def get_element(self, primarys, element="标题", need_pmid=False):
+        """
+        :param primarys: 主键, 可以是单个主键或者多个主键的list, tuple, set
+        :param element: 需要获得的类型, 默认为"标题", 可以是多个类型的list, tuple, set
+        :param need_pmid: 是否需要以PMID为前缀, bool型
+        :return: 一个结果列表
+        """
+        if not isinstance(need_pmid, bool):
+            raise TypeError("need_pmid参数必须为bool型")
+        if not isinstance(primarys, (list, tuple, set)):
+            primarys = [primarys]
+        tem = []
+        for value in self.yield_element(primarys, element, need_pmid):
+            tem.append('\n'.join(value))
+        return tem
 
     def yield_content(self, pmids, need_pmid=False):
         """
@@ -333,10 +407,7 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "正文", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "正文", need_pmid)
 
     def get_summary(self, pmids, need_pmid=False):
         """
@@ -344,10 +415,7 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "摘要", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "摘要", need_pmid)
 
     def get_title(self, pmids, need_pmid=False):
         """
@@ -355,10 +423,7 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "标题", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "标题", need_pmid)
 
     def get_pmc(self, pmids, need_pmid=False):
         """
@@ -366,10 +431,7 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "PMCID", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "PMCID", need_pmid)
 
     def get_author(self, pmids, need_pmid=False):
         """
@@ -377,10 +439,7 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "作者", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "作者", need_pmid)
 
     def get_time(self, pmids, need_pmid=False):
         """
@@ -388,10 +447,7 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "时间", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "时间", need_pmid)
 
     def get_journal(self, pmids, need_pmid=False):
         """
@@ -399,13 +455,41 @@ class OneFilePubmud(dict):
         则打印的错误信息是一个字典, key为PMID
         value是一个列表, 列表第一个元素代表重复的次数
         """
-        tem = []
-        for elem in self.yield_element(pmids, "期刊", need_pmid):
-            tem.append(''.join(elem))
-        return tem
+        return self.get_element(pmids, "期刊", need_pmid)
 
     def copy(self):
         return self.__class__(self)
+
+    def make_pages(self, make_html=True):
+        if not os.path.exists(os.getcwd() + "/template/index_model.html") \
+                or not os.path.exists(os.getcwd() + "/template/summary_model.html"):
+            raise FileNotFoundError("模板丢失!")
+
+        with open(os.getcwd() + "/template/index_model.html", "r", encoding="utf8") as fin:
+            index_html = fin.read()
+        with open(os.getcwd() + "/template/summary_model.html", "r", encoding="utf8") as fin:
+            summary_html = fin.read()
+        index_tem = Templite(index_html)
+        summary_tem = Templite(summary_html)
+        index_txt = index_tem.render({
+            "articles": self.values()
+        })
+
+        if make_html:
+            if not os.path.exists(os.getcwd() + "/HTML"):
+                os.mkdir(os.getcwd() + "/HTML")
+            with open(os.getcwd() + "/index.html", "w", encoding="utf8") as fin:
+                fin.write(index_txt)
+
+        for key, article in self.items():
+            if key == "file_name" or key == "path" or key == "no_dot_file_name":
+                continue
+            summary_txt = summary_tem.render({
+                "article": article
+            })
+            if make_html:
+                with open(os.getcwd()+"/HTML/" + ''.join(article["PMID"]) + ".html", "w", encoding="utf8") as fin:
+                    fin.write(summary_txt)
 
 
 class MultiFilePubmud(OneFilePubmud):

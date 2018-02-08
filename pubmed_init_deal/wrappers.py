@@ -100,7 +100,7 @@ class MultiDict(TypeConversionDict):
         """
         dict.__setitem__(self, key, list(new_list))
 
-    def setdefault(self, k, default = None):
+    def setdefault(self, k, default=None):
         if k not in self:
             self[k] = default
         else:
