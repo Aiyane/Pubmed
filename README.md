@@ -1,6 +1,6 @@
 ## 这里是详细的说明及例子
 
-工具地址在[这里](https://github.com/qq2310091880/Pubmed/tree/master/pubmed_init_deal "Pubmud工具")
+工具地址在[这里](https://github.com/qq2310091880/Pubmed/tree/master/pubmed "Pubmud工具")
 
 ```py
 from pubmed import OneFilePubmud, MultiFilePubmud
