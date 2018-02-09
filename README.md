@@ -36,9 +36,9 @@ no_dot_file_name = text_root.no_dot_file_name  # 无后缀文件名
 这些信息在root中可没有, 因为root是包含很多文件的, 不过在root中, 每篇文章都有自己的路径键值
 
 ```py
-path1 = root["28828506"]["path"]
-file_name1 = root["28828506"]["file_name"]
-no_dot_file_name1 = root["28828506"]["no_dot_file_name"]
+path1 = root["28828506"].path
+file_name1 = root["28828506"].file_name
+no_dot_file_name1 = root["28828506"].no_dot_file_name
 ```
 如果你的文件名不是标准的.txt文件, 可能上面的调用就会出错, 比如他们也许没有后缀文件名属性
 
