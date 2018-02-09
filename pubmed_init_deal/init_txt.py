@@ -45,6 +45,8 @@ def deal_line(file_path):
         elif line.strip() == "":
             count -= 1
         elif count == 1:
+            if line.startswith("#"):
+                line = line[1:]
             if line.split(".", 1)[0].isdigit():
                 try:
                     line = re.split(r",|\.|;|:", line)

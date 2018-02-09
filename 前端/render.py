@@ -34,8 +34,8 @@ class Render(object):
         :param line: 具有关键字的一行
         :return: 替换结果
         """
-        _str1 = line.replace("关键字$", "<span class=\"trait\">")
-        _str2 = _str1.replace("$关键字", "</span>")
+        _str1 = line.replace("性状$", "<span class=\"trait\">")
+        _str2 = _str1.replace("$性状", "</span>")
         _str3 = _str2.replace("基因$", "<span class=\"gene\">")
         _str4 = _str3.replace("$基因", "</span>")
         return _str4
@@ -69,6 +69,9 @@ class Render(object):
                     elif k == "正文":
                         my_all.append(self.__trans(cstring))
                         cstring = my_all
+                    if k == "摘要":
+                        cstring = self.__trans(cstring)
+                        cstring = [cstring]
                     article[self.my_dict[k]] = cstring
                     break
         for key in self.my_dict.values():

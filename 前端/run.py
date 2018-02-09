@@ -13,7 +13,7 @@ my_dict为摘要的关键字与模板的变量名对照字典
 
 """
 
-path = "C:\\Users\\Administrator\\Desktop\\fin_res"
+path = "C:\\Users\\Administrator\\Desktop\\fin_res3"
 detail_model = 'abstract.html'
 index_model = 'Document.html'
 
@@ -21,6 +21,7 @@ my_dict = {
     "时间": "time",
     "标题": "title",
     "内容": "content",
+    "摘要": "content",
     "正文": "main",
     "作者": "author",
     "PMID": "pmid",

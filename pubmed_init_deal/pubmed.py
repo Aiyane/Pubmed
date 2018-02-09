@@ -54,9 +54,9 @@
     summary.yield_author()
     summary.yield_title()
     
-    summary["path"]  # 为单文件路径
-    summary["file_name"]  # 为单文件名
-    summary["no_dot_file_name"]  # 为无后缀文件名
+    summary.path  # 为单文件路径
+    summary.file_name  # 为单文件名
+    summary.no_dot_file_name  # 为无后缀文件名
     
     new_sum = OneFilePubmud(summary)  # 这样拷贝summary
     new_sum = OneFilePubmud.copy()  # 或者调用此方法
@@ -81,9 +81,9 @@ MultiFilePubmud类的用法与OneFilePubmud的用法基本一致, 区别在于�
     path = "C:/Users/Administrator/Desktop/摘要文件夹"
     summary = MultiFilePubmud(path)
     
-    summary['15067400']['path']  # 这是此文章的全路径
-    summary['15067400']['file_name']  # 这是此文章的文件名
-    summary['15067400']['no_dot_file_name']  # 这是此文章无后缀文件名
+    summary['15067400'].path  # 这是此文章的全路径
+    summary['15067400'].file_name  # 这是此文章的文件名
+    summary['15067400'].no_dot_file_name  # 这是此文章无后缀文件名
 
 """
 from wrappers import MultiDict
@@ -151,10 +151,10 @@ def add_path_info_to_article(file_path, article):
 
     no_dot_file_name = ''.join(file_name.split(".")[:-1])  # 无后缀文件名
 
-    article.add("path", file_path)
-    article.add("file_name", file_name)
+    article.path = file_path
+    article.file_name = file_name
     if "." in file_name:  # 如果有后缀增加无后缀文件名属性
-        article.add("no_dot_file_name", no_dot_file_name)
+        article.no_dot_file_name = no_dot_file_name
     return article
 
 
@@ -460,36 +460,106 @@ class OneFilePubmud(dict):
     def copy(self):
         return self.__class__(self)
 
+    def make_summarys(self, summary_html=None):
+        if not isinstance(summary_html, str):
+            raise TypeError("摘要模板类型必须是str")
+
+        if not summary_html:
+            try:
+                with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
+                    summary_html = fin.read()
+            except IOError:
+                raise FileNotFoundError("模板丢失!")
+
+        if not os.path.exists(os.getcwd() + "/HTML"):
+            os.mkdir(os.getcwd() + "/HTML")
+
+        for key, article in self.items():
+            yield key, make_summary(article, summary_html)
+
+    def make_index(self, index_html=None):
+        if not isinstance(index_html, str):
+            raise TypeError("主页模板类型必须是str")
+
+        if not index_html:
+            try:
+                with open(os.getcwd() + "/template/index.model", "r", encoding="utf8") as fin:
+                    index_html = fin.read()
+            except IOError:
+                raise FileNotFoundError("模板丢失!")
+
+        index_tem = Templite(index_html)
+        index_txt = index_tem.render({
+            "articles": self.values()
+        })
+        return index_txt
+
     def make_pages(self, make_html=True):
-        if not os.path.exists(os.getcwd() + "/template/index_model.html") \
-                or not os.path.exists(os.getcwd() + "/template/summary_model.html"):
+        if not os.path.exists(os.getcwd() + "/template/index.model") \
+                or not os.path.exists(os.getcwd() + "/template/summary.model"):
             raise FileNotFoundError("模板丢失!")
 
         with open(os.getcwd() + "/template/index.model", "r", encoding="utf8") as fin:
             index_html = fin.read()
         with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
             summary_html = fin.read()
-        index_tem = Templite(index_html)
-        summary_tem = Templite(summary_html)
-        index_txt = index_tem.render({
-            "articles": self.values()
-        })
 
+        index_txt = self.make_index(index_html)
         if make_html:
-            if not os.path.exists(os.getcwd() + "/HTML"):
-                os.mkdir(os.getcwd() + "/HTML")
-            with open(os.getcwd() + "/index.html", "w", encoding="utf8") as fin:
-                fin.write(index_txt)
+            for key, article in self.make_summarys(summary_html):
+                create_file(os.getcwd() + "/HTML/" + key + ".html", article)
+            create_file(index_txt, os.getcwd() + "/index.html")
 
-        for key, article in self.items():
-            if key == "file_name" or key == "path" or key == "no_dot_file_name":
-                continue
-            summary_txt = summary_tem.render({
-                "article": article
-            })
-            if make_html:
-                with open(os.getcwd()+"/HTML/" + ''.join(article["PMID"]) + ".html", "w", encoding="utf8") as fin:
-                    fin.write(summary_txt)
+    def server_summary(self, pmid):
+        article = self.get(pmid)
+        if article:
+            pass
+
+
+def make_summary(article, summary_html=None):
+    """
+    生成一篇文章的HTML页面
+    :param summary_html: 文章模板, 没有就默认为template下的summary.model
+    :param article: Article类
+    :param path: 完整输出路径, 没有就默认输出当前目录下的HTML文件夹中, 以PMID or PMCID为文件名
+    """
+    if summary_html:
+        if not isinstance(summary_html, str):
+            raise TypeError("摘要模板类型必须是str")
+    else:
+        try:
+            with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
+                summary_html = fin.read()
+        except IOError:
+            raise FileNotFoundError("模板丢失!")
+
+    if not isinstance(article, Article):
+        raise TypeError("文章类型必须是Article")
+    summary_tem = Templite(summary_html)
+    summary_txt = summary_tem.render({
+        "article": article
+    })
+
+    # if not path:
+    #     name = article.get("PMID")
+    #     if not name:
+    #         name = article.get("PMCID")
+    #     if not name:
+    #         warnings.warn("没有正确的输出路径")
+    #         return
+    #     if not os.path.exists(os.getcwd() + "/HTML"):
+    #         os.mkdir(os.getcwd() + "/HTML")
+    #     path = os.getcwd() + "HTML" + ''.join(name) + ".html"
+
+    return summary_txt
+
+
+def create_file(text, path):
+    try:
+        with open(path, "w", encoding="utf8") as fin:
+            fin.write(text)
+    except IOError:
+        raise
 
 
 class MultiFilePubmud(OneFilePubmud):

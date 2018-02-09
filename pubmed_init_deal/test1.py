@@ -1,35 +1,49 @@
 # coding: utf-8
+"""
+用来生成markdown文档
+"""
 import os
-with open(os.getcwd()+"/test.py", "r", encoding="utf8") as fin:
-    lines = fin.readlines()
 
-res = []
-codefence = False
-for line in lines:
-    if line.startswith("#"):
-        if codefence:
-            res.append("```\n")
-            codefence = False
-        res.append(line[2:])
-        res.append('\n')
-    elif line.startswith('"""'):
-        if codefence:
-            res.append("```\n")
-            codefence = False
-        res.append("### " + line[3:-4])
-        res.append("\n")
-    elif line == "\n":
-        if codefence:
-            res.append("```\n")
-            codefence = False
-        res.append(line)
-    else:
-        if not codefence:
-            res.append("```py\n")
-            codefence = True
-        res.append(line)
-if codefence:
-    res.append("```\n")
 
-with open(os.getcwd()+"/doc.md", "w", encoding="utf8") as f:
-    f.write(''.join(res))
+def getDoc(test_file="test.py"):
+    path = os.getcwd() + "/" + test_file
+
+    with open(path, "r", encoding="utf8") as fin:
+        lines = fin.readlines()
+
+    codefence = False
+    yield "## " + lines[0][3:-4]
+    for line in lines[1:]:
+        if line.startswith("#"):
+            if codefence:
+                yield "```\n"
+                codefence = False
+            yield line[2:]
+            yield '\n'
+        elif line.startswith('"""'):
+            if codefence:
+                yield "```\n"
+                codefence = False
+            yield "### " + line[3:-4]
+            yield "\n"
+        elif line == "\n":
+            if codefence:
+                yield "```\n"
+                codefence = False
+            yield line
+        else:
+            if not codefence:
+                yield "```py\n"
+                codefence = True
+            yield line
+    if codefence:
+        yield "```\n"
+
+
+def main(file="doc.md", test_file="test.py"):
+    with open(os.getcwd() + "/" + file, "w", encoding="utf8") as f:
+        for line in getDoc(test_file):
+            f.write(line)
+
+if __name__ == '__main__':
+    main()

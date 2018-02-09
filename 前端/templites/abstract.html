@@ -246,7 +246,7 @@ article {
 
 			{# 如果是全文 #}
 			{% if article.if_full %}
-				<h2>正文</h2>
+				<h2>摘要</h2>
 				{% for my_content in article.content %}
 					<p>&nbsp;&nbsp;
 						{{ my_content }}
@@ -262,7 +262,7 @@ article {
 						{{ my_content }}
 					</p>
 				{% endfor %}
-				<h2>正文</h2>
+				<h2>摘要</h2>
 				{% for my_content in article.main %}
 					<p>&nbsp;&nbsp;
 						{{ my_content }}
