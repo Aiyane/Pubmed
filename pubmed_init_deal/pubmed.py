@@ -507,7 +507,7 @@ class OneFilePubmud(dict):
         index_txt = self.make_index(index_html)
         if make_html:
             for key, article in self.make_summarys(summary_html):
-                create_file(os.getcwd() + "/HTML/" + key + ".html", article)
+                create_file(article, os.getcwd() + "/HTML/" + key + ".html")
             create_file(index_txt, os.getcwd() + "/index.html")
 
     def server_summary(self, pmid):

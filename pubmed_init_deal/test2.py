@@ -1,4 +1,5 @@
 # coding: utf-8
+"""用来标注基因"""
 import os
 
 path = "C:/Users/Administrator/Desktop/fin_res2"
