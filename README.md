@@ -160,7 +160,7 @@ text_root.add_article("001", article)
 ### 辅助函数
 
 ```py
-from init_txt import deal_line
+from pubmed import deal_line
 ```
 
 你也许并不想得Pubmed文章的什么信息, 你只是想要将Pubmed下载的文章里那麻烦的断行合并
@@ -194,7 +194,7 @@ deal_line是一个生成器, 它会一行行解析你的文件, 并且标注这�
 那下面的辅助函数就是为了这而存在的
 
 ```py
-from init_txt import init_txt
+from pubmed import init_txt
 text = []
 for line in init_txt(init_path):  # init_path是文件路径
     text.append(line)
@@ -202,6 +202,31 @@ print(''.join(text))
 ```
 现在你会发现断行已经不存在了, 而且已经没有了令你讨厌的标注信息, 就是单纯的PubMed摘要信息!!
 
+也许你想要制作一个html页面来展示一篇文章
+
+```py
+from pubmed import make_summary, make_file
+html = make_summary(article)
+```
+make_summary这个函数接收两个参数, 第一个是Article类的实例, 第二个是你写的页面模板, 如果你没有写第二个参数
+
+默认是pubmed/templite/summary.model, 返会的就是html的具体内容
+
+```py
+make_file(html, path)  # 这里path是某个文件路径
+```
+make_file函数就是接收内容和文件路径来创建这个文件, 相当于以下
+```py
+with open(path, "w", encoding="utf8") as f:
+	f.write(html)
+```
+如果是你自己的创建的Article类的实例article, 很可能这个实例没有路径的属性, 你可以通过以下函数添加路径属性
+
+```py
+from pubmed import add_path_info_to_article
+add_path_info_to_article(path, article)  # 这里的path是路径, article是Article类实例
+```
+这样你的article会有path(路径), file_name(文件名), no_dot_file_name(无后缀文件名)三个属性
 
 ### 其他正在建设的功能
 
