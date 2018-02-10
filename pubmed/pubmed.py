@@ -285,6 +285,7 @@ class OneFilePubmud(dict):
             return article.get(key)
 
     def yield_all(self, element="标题", need_pmid=False):
+        """通过key,yield出所有文章的value"""
         if not isinstance(need_pmid, bool):
             raise TypeError("第二个参数必须为bool值")
 
@@ -292,6 +293,7 @@ class OneFilePubmud(dict):
             yield self.get_element(primary, element, need_pmid)
 
     def get_all(self, element="标题", need_pmid=False):
+        """通过key, 返回所有文章的value的list"""
         if not isinstance(need_pmid, bool):
             raise TypeError("第二个参数必须为bool值")
 
@@ -340,127 +342,83 @@ class OneFilePubmud(dict):
         return tem
 
     def yield_content(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
-        :param need_pmid: 
-        :param pmids: 
-        :return: 
+        """实际调用yield_element, 但是第二个参数为"正文"
         """
         return self.yield_element(pmids, "正文", need_pmid)
 
     def yield_summary(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
-        :param need_pmid: 
-        :param pmids: 
-        :return: 
+        """实际调用yield_element, 但是第二个参数为"摘要" 
         """
         return self.yield_element(pmids, "摘要", need_pmid)
 
     def yield_title(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用yield_element, 但是第二个参数为"标题"
         """
         return self.yield_element(pmids, "标题", need_pmid)
 
     def yield_pmc(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用yield_element, 但是第二个参数为"PMCID"
         """
         return self.yield_element(pmids, "PMCID", need_pmid)
 
     def yield_author(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用yield_element, 但是第二个参数为"作者"
         """
         return self.yield_element(pmids, "作者", need_pmid)
 
     def yield_time(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用yield_element, 但是第二个参数为"时间"
         """
         return self.yield_element(pmids, "时间", need_pmid)
 
     def yield_journal(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用yield_element, 但是第二个参数为"期刊"
         """
         return self.yield_element(pmids, "期刊", need_pmid)
 
     def get_content(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"正文"
         """
         return self.get_element(pmids, "正文", need_pmid)
 
     def get_summary(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"摘要"
         """
         return self.get_element(pmids, "摘要", need_pmid)
 
     def get_title(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"标题"
         """
         return self.get_element(pmids, "标题", need_pmid)
 
     def get_pmc(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"PMCID"
         """
         return self.get_element(pmids, "PMCID", need_pmid)
 
     def get_author(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"作者"
         """
         return self.get_element(pmids, "作者", need_pmid)
 
     def get_time(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"时间"
         """
         return self.get_element(pmids, "时间", need_pmid)
 
     def get_journal(self, pmids, need_pmid=False):
-        """
-        若传参为list或tuple或set
-        则打印的错误信息是一个字典, key为PMID
-        value是一个列表, 列表第一个元素代表重复的次数
+        """实际调用get_element, 但是第二个参数为"期刊"
         """
         return self.get_element(pmids, "期刊", need_pmid)
 
     def copy(self):
+        """复制一个实例"""
         return self.__class__(self)
 
     def make_summarys(self, summary_html=None):
+        """创建自身实例文章的HTML, summary_html是模板的str, 默认找template/summary.model
+        会在本地创建HTML文件夹, 实际是一个生成器, 返回主键和HTML内容的元组
+        """
         if not isinstance(summary_html, str):
             raise TypeError("摘要模板类型必须是str")
 
@@ -478,6 +436,9 @@ class OneFilePubmud(dict):
             yield key, make_summary(article, summary_html)
 
     def make_index(self, index_html=None):
+        """根据自身全部实例, 创建主页的HTML, 接收的参数是模板的str, 默认是/template/index.model
+        返回主页的HTML内容
+        """
         if not isinstance(index_html, str):
             raise TypeError("主页模板类型必须是str")
 
@@ -494,15 +455,30 @@ class OneFilePubmud(dict):
         })
         return index_txt
 
-    def make_pages(self, make_html=True):
-        if not os.path.exists(os.getcwd() + "/pubmed/template/index.model") \
-                or not os.path.exists(os.getcwd() + "/pubmed/template/summary.model"):
-            raise FileNotFoundError("模板丢失!")
-
-        with open(os.getcwd() + "/pubmed/template/index.model", "r", encoding="utf8") as fin:
-            index_html = fin.read()
-        with open(os.getcwd() + "/pubmed/template/summary.model", "r", encoding="utf8") as fin:
-            summary_html = fin.read()
+    def make_pages(self, make_html=True, index_html=None, summary_html=None):
+        """
+        根据自身实例, 创建html页面或者创建本地服务器, 以便在网页展示文章的信息
+        默认模板为template/index.model(主页), template/summary.model(文章)
+        :param summary_html: 文章模板str
+        :param index_html: 主页模板str
+        :param make_html: 是否生成html文件, bool值
+        """
+        if not index_html:
+            try:
+                with open(os.getcwd() + "/pubmed/template/index.model", "r", encoding="utf8") as fin:
+                    index_html = fin.read()
+            except IOError:
+                raise FileNotFoundError("主页模板丢失!")
+        else:
+            index_html = index_html
+        if not summary_html:
+            try:
+                with open(os.getcwd() + "/pubmed/template/summary.model", "r", encoding="utf8") as fin:
+                    summary_html = fin.read()
+            except IOError:
+                raise FileNotFoundError("文章模板丢失!")
+        else:
+            summary_html = summary_html
 
         index_txt = self.make_index(index_html)
         if make_html:
@@ -511,6 +487,7 @@ class OneFilePubmud(dict):
             create_file(index_txt, os.getcwd() + "/index.html")
 
     def server_summary(self, pmid):
+        """创建本地服务器"""
         article = self.get(pmid)
         if article:
             pass
@@ -543,6 +520,7 @@ def make_summary(article, summary_html=None):
 
 
 def create_file(text, path):
+    """根据内容和路径创建文件"""
     try:
         with open(path, "w", encoding="utf8") as fin:
             fin.write(text)
