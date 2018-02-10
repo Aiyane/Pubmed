@@ -86,11 +86,11 @@ MultiFilePubmud类的用法与OneFilePubmud的用法基本一致, 区别在于�
     summary['15067400'].no_dot_file_name  # 这是此文章无后缀文件名
 
 """
-from wrappers import MultiDict
+from pubmed.wrappers import MultiDict
 import os
-from init_txt import deal_line
+from pubmed.init_txt import deal_line
 import warnings
-from templite import Templite
+from pubmed.templite import Templite
 
 
 class Article(MultiDict):
@@ -466,7 +466,7 @@ class OneFilePubmud(dict):
 
         if not summary_html:
             try:
-                with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
+                with open(os.getcwd() + "/pubmed/template/summary.model", "r", encoding="utf8") as fin:
                     summary_html = fin.read()
             except IOError:
                 raise FileNotFoundError("模板丢失!")
@@ -483,7 +483,7 @@ class OneFilePubmud(dict):
 
         if not index_html:
             try:
-                with open(os.getcwd() + "/template/index.model", "r", encoding="utf8") as fin:
+                with open(os.getcwd() + "/pubmed/template/index.model", "r", encoding="utf8") as fin:
                     index_html = fin.read()
             except IOError:
                 raise FileNotFoundError("模板丢失!")
@@ -495,13 +495,13 @@ class OneFilePubmud(dict):
         return index_txt
 
     def make_pages(self, make_html=True):
-        if not os.path.exists(os.getcwd() + "/template/index.model") \
-                or not os.path.exists(os.getcwd() + "/template/summary.model"):
+        if not os.path.exists(os.getcwd() + "/pubmed/template/index.model") \
+                or not os.path.exists(os.getcwd() + "/pubmed/template/summary.model"):
             raise FileNotFoundError("模板丢失!")
 
-        with open(os.getcwd() + "/template/index.model", "r", encoding="utf8") as fin:
+        with open(os.getcwd() + "/pubmed/template/index.model", "r", encoding="utf8") as fin:
             index_html = fin.read()
-        with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
+        with open(os.getcwd() + "/pubmed/template/summary.model", "r", encoding="utf8") as fin:
             summary_html = fin.read()
 
         index_txt = self.make_index(index_html)
@@ -528,7 +528,7 @@ def make_summary(article, summary_html=None):
             raise TypeError("摘要模板类型必须是str")
     else:
         try:
-            with open(os.getcwd() + "/template/summary.model", "r", encoding="utf8") as fin:
+            with open(os.getcwd() + "/pubmed/template/summary.model", "r", encoding="utf8") as fin:
                 summary_html = fin.read()
         except IOError:
             raise FileNotFoundError("模板丢失!")
@@ -539,18 +539,6 @@ def make_summary(article, summary_html=None):
     summary_txt = summary_tem.render({
         "article": article
     })
-
-    # if not path:
-    #     name = article.get("PMID")
-    #     if not name:
-    #         name = article.get("PMCID")
-    #     if not name:
-    #         warnings.warn("没有正确的输出路径")
-    #         return
-    #     if not os.path.exists(os.getcwd() + "/HTML"):
-    #         os.mkdir(os.getcwd() + "/HTML")
-    #     path = os.getcwd() + "HTML" + ''.join(name) + ".html"
-
     return summary_txt
 
 
