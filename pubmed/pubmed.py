@@ -1,4 +1,5 @@
-# coding: utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 处理的文件: 合并后的摘要, 即全文与摘要都在都处理了的, 在没有摘要只有全文的文章里, 关键字以内容开头
 在有摘要有全文的文章里, 关键字以内容为摘要以正文为全文, 在只有摘要的文章里, 摘要以内容为关键字
@@ -7,20 +8,20 @@
 一个简单的应用例子:
 
     from getSummary import OneFilePubmud
-    
+
     path = "C:/Users/Administrator/Desktop/摘要文件.txt"
     summary = OneFilePubmud(path)
-    
+
     # 提供的方法, 这里的 "xxx" 可以替换成 "标题", "摘要", "时间", "作者", "期刊", "PMCID", "正文", 不填就默认为 "标题"
-    summary.get_element('15067400', "xxx")  # 通过pmid得到元素, 
+    summary.get_element('15067400', "xxx")  # 通过pmid得到元素,
     summary.get_element(['15067400', '15067400'], "xxx") # 通过list得到元素
     summary.get_element(('15067400', '15067400'), "xxx") # 通过tuple得到元素
     summary.get_element({'15067400', '15067401'}, "xxx") # 通过set得到元素
-    
+
     summary.get_summary('15067400')  # 通过pmid获取摘要
     summary.get_summary(['15067400', '15067400'])  # 通过pmid列表获取摘要
     summary.get_summary(('15067400', '15067400'))  # 通过pmid集合获取摘要
-    
+
     summary.get_content()  # 通过pmid获取正文(筛选出来的正文), 用法同摘要
     summart.get_pmc()  # 通过pmid获取pmcid, 用法同摘要
     summary.get_author()  # 通过pmid获取作者, 用法同摘要
@@ -28,9 +29,9 @@
     summary.get_time()  # 通过pmid获取时间, 用法同摘要
     summary.get_journal()  # 通过pmid获取期刊, 用法同摘要
     # 以上函数都有第三个参数, 接收布尔值, 表明是否需要将"{pmid}: "作为开头一同返回, 即 key: value 格式返回
-    
+
     summary['15067400']  # 显示一篇文章的全部信息
-    
+
     summary['15067400']["内容"]  # 显示一篇文章的摘要
     summary['15067400']["时间"]  # 显示一篇文章的时间
     summary['15067400']["标题"]  # 显示一篇文章的标题
@@ -39,7 +40,7 @@
     summary['15067400']["期刊"]  # 显示一篇文章的期刊
     summary['15067400']["PMID"]  # 显示一篇文章的PMID
     summary['15067400']["作者"]  # 显示一篇文章的作者
-    
+
     # 与上面类似的为有yield_element()方法, 区别是上述方法返回一个列表, 而yield开头的方法是一个生成器, 用于for循环,
     # 可以一个个的得到这些值而不是得到一个庞大的list占内存, 以下是用法, 第一个参数可接受list, tuple, set当然还有单个pmid字符串
     # 这里的 "xxx" 可以替换成 "标题", "摘要", "时间", "作者", "期刊", "PMCID", "正文", 不填就默认为 "标题"
@@ -53,14 +54,14 @@
     summary.yield_pmc()
     summary.yield_author()
     summary.yield_title()
-    
+
     summary.path  # 为单文件路径
     summary.file_name  # 为单文件名
     summary.no_dot_file_name  # 为无后缀文件名
-    
+
     new_sum = OneFilePubmud(summary)  # 这样拷贝summary
     new_sum = OneFilePubmud.copy()  # 或者调用此方法
-    
+
     # 当然把这个类当作普通的字典也完全可以
     my_dict = OneFilePubmud({"key": "value", "key2": "value2"})
     # 所以可以看出此类初始化参数类型可以是
@@ -74,13 +75,13 @@ MultiFilePubmud类的用法与OneFilePubmud的用法基本一致, 区别在于�
 3. MultiFilePubmud类型
 4. dict类型
 
-另外MultiFilePubmud的实例没有 "path", "file_name", "no_dot_file_name" 三个key, 但是可以对每一篇文章查找这些key, 
+另外MultiFilePubmud的实例没有 "path", "file_name", "no_dot_file_name" 三个key, 但是可以对每一篇文章查找这些key,
 以下是例子:
     from getSummary import MultiFilePubmud
-    
+
     path = "C:/Users/Administrator/Desktop/摘要文件夹"
     summary = MultiFilePubmud(path)
-    
+
     summary['15067400'].path  # 这是此文章的全路径
     summary['15067400'].file_name  # 这是此文章的文件名
     summary['15067400'].no_dot_file_name  # 这是此文章无后缀文件名
@@ -94,16 +95,16 @@ from pubmed.templite import Templite
 
 
 class Article(MultiDict):
-    
+
     def to_str(self, key):
         res = self.get(key)
         if res:
             return ''.join(res)
         return ""
-        
+
     def to_str_pmid(self):
         return self.to_str("PMID")
-    
+
     def to_str_pmcid(self):
         return self.to_str("PMCID")
 
@@ -115,7 +116,7 @@ class Article(MultiDict):
 
     def to_str_time(self):
         return self.to_str("时间")
-        
+
     def to_str_home(self):
         return self.to_str("地址")
 
@@ -347,7 +348,7 @@ class OneFilePubmud(dict):
         return self.yield_element(pmids, "正文", need_pmid)
 
     def yield_summary(self, pmids, need_pmid=False):
-        """实际调用yield_element, 但是第二个参数为"摘要" 
+        """实际调用yield_element, 但是第二个参数为"摘要"
         """
         return self.yield_element(pmids, "摘要", need_pmid)
 
@@ -486,11 +487,9 @@ class OneFilePubmud(dict):
                 create_file(article, os.getcwd() + "/HTML/" + key + ".html")
             create_file(index_txt, os.getcwd() + "/index.html")
 
-    def server_summary(self, pmid):
+    def make_server(self):
         """创建本地服务器"""
-        article = self.get(pmid)
-        if article:
-            pass
+        pass
 
 
 def make_summary(article, summary_html=None):
