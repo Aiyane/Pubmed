@@ -64,7 +64,7 @@
 		  <th>AUTHOR</th>
 		  <th>TIME</th>
 		  <th>HOME</th>
-		  <th>PTHER</th>
+		  <th>OTHER</th>
 		  <th>DOI</th>
 	  </tr>
 	  {% for article in articles %}

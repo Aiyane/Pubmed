@@ -4,7 +4,7 @@ from __future__ import print_function  # 兼容python2
 # from __future__ import unicode_literals
 
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
-from templite import Templite
+from pubmed.templite import Templite
 import os
 
 try:  # 兼容python2
@@ -261,7 +261,7 @@ def render_template(html_name, **context):
     :return: 解析出的文本
     """
     # if platform.platform().startswith("win")
-    path = os.getcwd() + "/template/" + html_name
+    path = os.path.split(os.path.realpath(__file__))[0] + "/template/" + html_name
     if_exist = os.path.exists(path)
     if if_exist:
         try:

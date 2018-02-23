@@ -73,6 +73,20 @@ def deal_line(file_path):
                 yield "信息:" + line.strip()
                 count -= 1
             else:
-                yield "摘要:" + line.strip()
+                try:
+                    _line = re.split(r"\.|;", line)
+                    words = _line[1].strip().split(' ')
+                    if len(words[0].strip()) == 4 and words[0].strip().isdigit() and \
+                            words[1] in Moth:
+                        yield "时间:" + ' '.join(words)
+                        count -= 1
+                    else:
+                        yield "摘要:" + line.strip()
+                except IndexError:
+                    yield "摘要:" + line.strip()
         elif count == 5:
             yield "其他:" + line.strip()
+
+
+Moth = ('Oct', 'Jan', 'Feb', 'Mar', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')

@@ -41,7 +41,7 @@ class CodeBuilder(object):
         self.code.append(section)
         return section
 
-    INDENT_STEP = 4  #  pep8标准
+    INDENT_STEP = 4  # pep8标准
 
     def indent(self):
         """
@@ -126,7 +126,7 @@ class Templite(object):
                 base_name = ''
                 merge_page = []
                 try:  # 初始化基础模板
-                    path = os.getcwd()+"/template/"+words[1][1:-1]
+                    path = os.getcwd() + "/template/" + words[1][1:-1]
                     with open(path, "rb") as fin:
                         base_tokens = re.split(r"(?s)({{.*?}}|{%.*?%}|{#.*?#})", fin.read().decode("utf8"))
                 except IOError:  # 不能打开基础模板
@@ -144,7 +144,7 @@ class Templite(object):
                                 raise self._syntax_error("Don't understand block", base_token)
                             base_name = words[1]
                             start_index = i
-                            
+
                         elif words[0] == "endblock":
                             if len(words) != 1 or base_name == '':
                                 raise self._syntax_error("Don't understand endblock", base_token)
@@ -156,7 +156,7 @@ class Templite(object):
                 for kid_token in tokens[2:]:  # 处理子模板
                     if kid_token.startswith("{%"):
                         words = kid_token[2:-2].strip().split()
-                        
+
                         if words[0] == "block":
                             if len(words) != 2 or start_collection:
                                 raise self._syntax_error("Don't understand block", kid_token)
@@ -168,7 +168,7 @@ class Templite(object):
                             end_index = _i + 1
                             start_collection = True
                             continue
-                            
+
                         elif words[0] == "endblock":
                             if len(words) != 1 or not start_collection:
                                 raise self._syntax_error("Don't understand endblock", kid_token)
@@ -181,7 +181,7 @@ class Templite(object):
                         if word == "super()":
                             if not start_collection:
                                 raise self._syntax_error("Error super()", kid_token)
-                            merge_page.extend(base_tokens[start_index:end_index-1])
+                            merge_page.extend(base_tokens[start_index:end_index - 1])
                             continue
 
                     elif start_collection:
@@ -191,7 +191,7 @@ class Templite(object):
 
                 merge_page.extend(base_tokens[end_index:])
                 tokens = merge_page
-                            
+
         for token in tokens:
             if token.startswith('{#'):
                 # 注释: 忽略注释符中的内容
