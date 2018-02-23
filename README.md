@@ -228,14 +228,14 @@ add_path_info_to_article(path, article)  # 这里的path是路径, article是Art
 ```
 这样你的article会有path(路径), file_name(文件名), no_dot_file_name(无后缀文件名)三个属性
 
-### 其他正在建设的功能
+### 其他~~正在建设~~(已完成)的功能
 
 也许你想要将你的文章变成可展示的页面, 你可以在页面上浏览...比如摘要之类的, 最好将全部文章列一张表格
 
 魔法出现了, 你只需要调用这个函数
 
 ```py
-text_root.make_pages()
+text_root.make_pages(make_html=True)
 ```
 上面的函数会为你的text_root(也就是OneFilePubmud或MultiFilePubmud对象的实例)创建页面
 
@@ -246,5 +246,14 @@ text_root.make_pages()
 
 当然这一部分还有很多可以扩展的功能, 比如我并不希望生成庞大数量的HTML文件, 而是创建本例服务器
 
-这样我们访问某个url时才会生成某个页面, 听上去很好, 我接下来准备将它实现
+~~这样我们访问某个url时才会生成某个页面, 听上去很好, 我接下来准备将它实现~~(已实现)
 
+当需要创建本地服务器是还是调用
+
+```py
+text_root.make_pages()
+```
+
+即可, 默认make_html参数为False, 即不生成html, 而是创建服务器, 打开http://127.0.0.1:8080/ 那么你就可以看到主页列表了.
+
+这里的服务器端, 用的是我写另一个小玩具["Jay"](https://github.com/qq2310091880/Jay "Jay").
