@@ -1,6 +1,15 @@
-## 这里是详细的说明及例子
+# Pubmed
 
-工具地址在[这里](https://github.com/qq2310091880/Pubmed/tree/master/pubmed "Pubmud工具")
+这是一个用来处理在Pubmed下载的Abstract摘要文件的工具, 会自动的将文件的信息提取出来进行标记, 你能够通过键非常方便的得到几乎Abstract摘要文件的全部信息.
+不管是展示还是数据提取, 都能让你不再需要对Abstract摘要文件进行任何的预处理.
+
+工具在根目录下的**pubmed**文件夹, 其他文件夹**皆不需要**, 环境为python3
+
+## 一个简单的例子
+
+pubmed.txt是在pubmed下载的原生Abstract摘要文件, test.py处理的就是此文件, 在根目录下运行`python3 test.py`可以查看例子结果.
+
+## 详细的说明及例子
 
 ```py
 from pubmed import OneFilePubmud, MultiFilePubmud
