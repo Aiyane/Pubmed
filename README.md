@@ -295,5 +295,5 @@ for pmid, article in text_root.yield_keys_values(keys, values, ignore=True):
 root = OneFilePubmed(articles)
 ```
 
-这样root中的文章就全是包含关键词的了. 以下是一个例子
+这样root中的文章就全是包含关键词的了. 以下是一个[例子](http://onqow625k.bkt.clouddn.com/50d63d8a-00b0-4cf7-9acd-3dee46bebcfb.gif)
 ![](http://onqow625k.bkt.clouddn.com/50d63d8a-00b0-4cf7-9acd-3dee46bebcfb.gif)
