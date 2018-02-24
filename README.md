@@ -266,3 +266,33 @@ text_root.make_pages()
 即可, 默认make_html参数为False, 即不生成html, 而是创建服务器, 打开http://127.0.0.1:8080/ 那么你就可以看到主页列表了.
 
 这里的服务器端, 用的是我写另一个小玩具[Jay](https://github.com/qq2310091880/Jay "Jay").
+
+#### 关于make_pages函数的补充
+
+这个函数有以下几个参数
+
+```py
+def make_pages(self, make_html=False, index_html=None, summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
+```
+
+make_pages就如上是判断生成html文件还是启动服务器, index_html和summary_html是主页和摘要页的模板文件, 默认是template文件夹中的index.model文件和summary.model文件, 可以自定义其他文件. keys是你需要标注的单词, 接收列表,集合或元组. 会将keys里的单词在全文中标注出来. values也是一样的, 不过回用另一种颜色标注出来. 这两个参数适合观察某两类的对应关系. ignore判断标注是否忽略大小写, filter_article判断是否需要将没有标注的文章筛出去不显示在页面上.
+
+**注意**: values, ignore, filter_article参数的赋值必须保证keys参数会被赋值, 否则会出现错误.
+
+对于有标注的文章, 你可能不止会显示页面的时候用到, 在程序中得到这些被筛选的文章的方法就是
+
+```py
+articles = dict()
+keys = ['word1', 'word2']
+values = ['word3', 'word4']
+for pmid, article in text_root.yield_keys_values(keys, values, ignore=True):
+    articles[pmid] = article
+```
+
+如以上程序所示, yield_keys_values就是一个生成器, 接收两个关键词列表keys, words. ignore参数是判断是否忽略大小写. 每一个迭代出来的对象就是一篇含有关键词的文章的pmid和Article类的对象, 通过这个方法可以很容易的筛选出全部的包含关键词的文章, 你可以通过构造文章字典再新建一个OneFilePubmed对象
+
+```py
+root = OneFilePubmed(articles)
+```
+
+这样root中的文章就全是包含关键词的了.

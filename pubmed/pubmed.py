@@ -452,6 +452,22 @@ class OneFilePubmud(dict):
         """复制一个实例"""
         return self.__class__(self)
 
+    def add_keys(self, article, keys, values=None, ignore=False):
+        article.add_keys(keys, values, ignore)
+
+    def yield_keys_values(self, keys, values=None, ignore=False):
+        for key, article in self.items():
+            self.add_keys(article, keys, values, ignore)
+            content = article.get('摘要')
+            title = article.get('标题')
+            if content:
+                content = escape(''.join(content))
+            if title:
+                title = escape(''.join(title))
+            if content or title:
+                if (content and '>' in article._find_keys(content)) or (title and '>' in article._find_keys(title)):
+                    yield key, article
+
     def make_summarys(self, summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
         """创建自身实例文章的HTML, summary_html是模板的str, 默认找template/summary.model
         会在本地创建HTML文件夹, 实际是一个生成器, 返回主键和HTML内容的元组
@@ -470,21 +486,19 @@ class OneFilePubmud(dict):
             os.mkdir(os.getcwd() + "/HTML")
 
         need_pmid = []
-        for key, article in self.items():
+        if keys:
             if filter_article:
-                article.add_keys(keys, values, ignore)
-                content = article.get('摘要')
-                title = article.get('标题')
-                if content:
-                    content = escape(''.join(content))
-                if title:
-                    title = escape(''.join(title))
-                if content or title:
-                    if (content and '>' in article._find_keys(content)) or (title and '>' in article._find_keys(title)):
-                        need_pmid.append(key)
-                        yield key, make_summary(article, summary_html, keys, values, ignore)
+                self._need_pmid = []
+                for key, article in self.yield_keys_values(keys, values, ignore):
+                    self._need_pmid.append(key)
+                    yield key, make_summary(article, summary_html)
             else:
-                yield key, make_summary(article, summary_html, keys, values, ignore)
+                for key, article in self.items():
+                    self.add_keys(article, keys, values, ignore)
+                    yield key, make_summary(article, summary_html)
+        else:
+            for key, article in self.items():
+                yield key, make_summary(article, summary_html)
         if need_pmid:
             self._need_pmid = need_pmid
 
@@ -516,7 +530,8 @@ class OneFilePubmud(dict):
             })
         return index_txt
 
-    def make_pages(self, make_html=False, index_html=None, summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
+    def make_pages(self, make_html=False, index_html=None,
+                   summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
         """
         根据自身实例, 创建html页面或者创建本地服务器, 以便在网页展示文章的信息
         默认模板为template/index.model(主页), template/summary.model(文章)
@@ -553,21 +568,18 @@ class OneFilePubmud(dict):
         """创建本地服务器"""
         app = Jay()
         need_pmid = []
-        for pmid in self.yield_all("PMID"):
+        if keys:
             if filter_article:
-                article = self[''.join(pmid)]
-                article.add_keys(keys, values, ignore)
-                content = article.get('摘要')
-                title = article.get('标题')
-                if content:
-                    content = escape(''.join(content))
-                if title:
-                    title = escape(''.join(title))
-                if content or title:
-                    if (content and '>' in article._find_keys(content)) or (title and '>' in article._find_keys(title)):
-                        need_pmid.append(''.join(pmid))
-                        self._make_detail(app, pmid, article=article)
+                for key, article in self.yield_keys_values(keys, values, ignore):
+                    need_pmid.append(key)
+                    self._make_detail(app, key, article=article)
             else:
+                for key, article in self.items():
+                    article = self[key]
+                    self.add_keys(article, keys, values, ignore)
+                    self._make_detail(app, key, keys, values, ignore)
+        else:
+            for pmid in self.yield_all("PMID"):
                 self._make_detail(app, pmid, keys, values, ignore)
         if need_pmid:
             self._need_pmid = need_pmid
@@ -604,7 +616,7 @@ class OneFilePubmud(dict):
             return render_template("summary.model", article=my_article)
 
 
-def make_summary(article, summary_html=None, keys=None, values=None, ignore=False):
+def make_summary(article, summary_html=None):
     """
     生成一篇文章的HTML页面
     :param summary_html: 文章模板, 没有就默认为template下的summary.model
@@ -623,8 +635,7 @@ def make_summary(article, summary_html=None, keys=None, values=None, ignore=Fals
 
     if not isinstance(article, Article):
         raise TypeError("文章类型必须是Article")
-    if keys:
-        article.add_keys(keys, values, ignore)
+
     summary_tem = Templite(summary_html)
     summary_txt = summary_tem.render({
         "article": article
