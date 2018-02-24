@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # test.py
 from pubmed import OneFilePubmud
+root = OneFilePubmud('pubmed.txt')
+words = ['soybean']
+words2 = ['information']
 
-content = OneFilePubmud('pubmed.txt')
-content.make_pages(make_html=False, keys=['soybean'], ignore=True, filter_article=True)
+root.make_pages(keys=words, values=words2, filter_article=True)

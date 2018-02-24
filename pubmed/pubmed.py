@@ -102,6 +102,11 @@ class Article(MultiDict):
     _has_keys = False
 
     def _find_keys(self, res):
+        """
+        这个方法是为了给文章标注关键词, 用html标签来标注出来
+        :res: 处理的字符串
+        return: 返回处理完毕字符串
+        """
         for _key in self._keys:
             if self._ignore:
                 res = re.sub(re.escape(_key), '<span class="trait">' +
@@ -120,6 +125,12 @@ class Article(MultiDict):
         return res
 
     def add_keys(self, keys, values=None, ignore=False):
+        """
+        增加标注单词的方法, 秩序调用此方法, 之后在生成页面是关键词就是标注好的
+        :keys: list, set, tuple 关键词
+        :values: list, set, tuple 关键词
+        :ignore: 是否忽略大小写
+        """
         if not isinstance(keys, (list, tuple, set)):
             raise TypeError('参数必须为list, tuple, set之一!')
         self._keys = keys
@@ -456,6 +467,12 @@ class OneFilePubmud(dict):
         article.add_keys(keys, values, ignore)
 
     def yield_keys_values(self, keys, values=None, ignore=False):
+        """
+        生成器, 生成有关键词的文章的pmid-articel
+        :keys: 关键词列表
+        :values: 关键词列表
+        :ignore: 是否忽略大小写
+        """
         for key, article in self.items():
             self.add_keys(article, keys, values, ignore)
             content = article.get('摘要')
@@ -588,7 +605,6 @@ class OneFilePubmud(dict):
 
     def _make_index(self, app, need_pmid, filter_article):
         """注册主页
-        :app: Jay的application应用
         """
         @app.route('/')
         def index():
@@ -603,8 +619,6 @@ class OneFilePubmud(dict):
 
     def _make_detail(self, app, pmid, keys=None, values=None, ignore=False, article=None):
         """注册创建文章详情页
-        :app: Jay的application应用
-        :pmid: 文章的pmid
         """
         @app.route('/HTML/' + ''.join(pmid) + '.html')
         def index():
