@@ -92,7 +92,7 @@ import os
 from pubmed.init_txt import deal_line
 import warnings
 from pubmed.templite import Templite
-from pubmed.serving import Jay, render_template
+from pubmed.serving import Jay, render_template_by_template
 from cgi import escape
 import re
 
@@ -489,15 +489,10 @@ class OneFilePubmud(dict):
         """创建自身实例文章的HTML, summary_html是模板的str, 默认找template/summary.model
         会在本地创建HTML文件夹, 实际是一个生成器, 返回主键和HTML内容的元组
         """
-        if not isinstance(summary_html, str):
-            raise TypeError("摘要模板类型必须是str")
-
-        if not summary_html:
-            try:
-                with open(os.path.split(os.path.realpath(__file__))[0] + "/template/summary.model", "r", encoding="utf8") as fin:
-                    summary_html = fin.read()
-            except IOError:
-                raise FileNotFoundError("模板丢失!")
+        if summary_html:
+            if not isinstance(summary_html, str):
+                raise TypeError("摘要模板类型必须是str")
+            summary_tem = create_template('summary.model')
 
         if not os.path.exists(os.getcwd() + "/HTML"):
             os.mkdir(os.getcwd() + "/HTML")
@@ -515,7 +510,7 @@ class OneFilePubmud(dict):
                     yield key, make_summary(article, summary_html)
         else:
             for key, article in self.items():
-                yield key, make_summary(article, summary_html)
+                yield key, make_summary(article, summary_tem)
         if need_pmid:
             self._need_pmid = need_pmid
 
@@ -527,11 +522,7 @@ class OneFilePubmud(dict):
             raise TypeError("主页模板类型必须是str")
 
         if not index_html:
-            try:
-                with open(os.path.split(os.path.realpath(__file__))[0] + "/template/index.model", "r", encoding="utf8") as fin:
-                    index_html = fin.read()
-            except IOError:
-                raise FileNotFoundError("模板丢失!")
+            index_html = create_template('index.model')
 
         index_tem = Templite(index_html)
         if filter_article:
@@ -557,53 +548,43 @@ class OneFilePubmud(dict):
         :param make_html: 是否生成html文件, bool值
         """
         if not make_html:
-            return self.make_server(keys=keys, values=values, ignore=ignore, filter_article=filter_article)
-        if not index_html:
-            try:
-                with open(os.path.split(os.path.realpath(__file__))[0] + "/template/index.model", "r", encoding="utf8") as fin:
-                    index_html = fin.read()
-            except IOError:
-                raise FileNotFoundError("主页模板丢失!")
-        else:
-            index_html = index_html
-        if not summary_html:
-            try:
-                with open(os.path.split(os.path.realpath(__file__))[0] + "/template/summary.model", "r", encoding="utf8") as fin:
-                    summary_html = fin.read()
-            except IOError:
-                raise FileNotFoundError("文章模板丢失!")
-        else:
-            summary_html = summary_html
-
+            return self.make_server(index_html=index_html, summary_html=summary_html, keys=keys, values=values, ignore=ignore, filter_article=filter_article)
+        
         for key, article in self.make_summarys(summary_html, keys, values, ignore, filter_article):
             create_file(article, os.getcwd() + "/HTML/" + key + ".html")
 
         index_txt = self.make_index(index_html, filter_article=filter_article)
         create_file(index_txt, os.getcwd() + "/index.html")
 
-    def make_server(self, keys=None, values=None, ignore=False, filter_article=False):
+    def make_server(self, index_html=None, summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
         """创建本地服务器"""
         app = Jay()
         need_pmid = []
+
+        if index_html is None:
+            index_html = create_template('index.model')
+        if summary_html is None:
+            summary_html = create_template('summary.model')
+
         if keys:
             if filter_article:
                 for key, article in self.yield_keys_values(keys, values, ignore):
                     need_pmid.append(key)
-                    self._make_detail(app, key, article=article)
+                    self._make_detail(app, key, summary_html=summary_html, article=article)
             else:
                 for key, article in self.items():
                     article = self[key]
                     self.add_keys(article, keys, values, ignore)
-                    self._make_detail(app, key, keys, values, ignore)
+                    self._make_detail(app, key, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
         else:
             for pmid in self.yield_all("PMID"):
                 self._make_detail(app, pmid, keys, values, ignore)
         if need_pmid:
             self._need_pmid = need_pmid
-        self._make_index(app, need_pmid, filter_article)
+        self._make_index(app, need_pmid, filter_article, index_html=index_html)
         app.run()
 
-    def _make_index(self, app, need_pmid, filter_article):
+    def _make_index(self, app, need_pmid, filter_article, index_html):
         """注册主页
         """
         @app.route('/')
@@ -615,42 +596,46 @@ class OneFilePubmud(dict):
                         articles.append(self[''.join(pmid)])
             else:
                 articles = self.values()
-            return render_template("index.model", articles=articles)
+            return render_template_by_template(index_html, articles=articles)
 
-    def _make_detail(self, app, pmid, keys=None, values=None, ignore=False, article=None):
+
+    def _make_detail(self, app, pmid, summary_html, keys=None, values=None, ignore=False, article=None):
         """注册创建文章详情页
         """
         @app.route('/HTML/' + ''.join(pmid) + '.html')
         def index():
             if article:
-                return render_template("summary.model", article=article)
+                return render_template_by_template(summary_html, article=article)
             my_article = self[''.join(pmid)]
             if keys:
                 my_article.add_keys(keys, values, ignore)
-            return render_template("summary.model", article=my_article)
+            return render_template_by_template(summary_html, article=my_article)
 
 
-def make_summary(article, summary_html=None):
+def create_template(html_name):
+    path = os.path.split(os.path.realpath(__file__))[
+        0] + "/template/" + html_name
+    if_exist = os.path.exists(path)
+    if if_exist:
+        try:
+            with open(path, "rb") as fin:
+                html = fin.read().decode("utf8")
+            text = Templite(html)
+        except IOError:
+            raise
+    return text
+
+
+def make_summary(article, summary_tem):
     """
     生成一篇文章的HTML页面
     :param summary_html: 文章模板, 没有就默认为template下的summary.model
     :param article: Article类
     :param path: 完整输出路径, 没有就默认输出当前目录下的HTML文件夹中, 以PMID or PMCID为文件名
     """
-    if summary_html:
-        if not isinstance(summary_html, str):
-            raise TypeError("摘要模板类型必须是str")
-    else:
-        try:
-            with open(os.path.split(os.path.realpath(__file__))[0] + "/template/summary.model", "r", encoding="utf8") as fin:
-                summary_html = fin.read()
-        except IOError:
-            raise FileNotFoundError("模板丢失!")
-
     if not isinstance(article, Article):
         raise TypeError("文章类型必须是Article")
 
-    summary_tem = Templite(summary_html)
     summary_txt = summary_tem.render({
         "article": article
     })

@@ -275,5 +275,10 @@ def render_template(html_name, **context):
     return text.render(context)
 
 
+def render_template_by_template(template, **content):
+    if not isinstance(template, Templite):
+        raise TypeError("%s 必须是Template类" % template)
+    return template.render(content)
+
 # 存储请求的相关信息, 在客户端未发送数据之前是空的, 在客户端发送数据之后会将请求的数据保存
 request = Request()
