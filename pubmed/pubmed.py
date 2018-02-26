@@ -109,19 +109,21 @@ class Article(MultiDict):
         """
         for _key in self._keys:
             if self._ignore:
-                res = re.sub(re.escape(_key), '<span class="trait">' +
-                             _key + '</span>', res, 0, re.IGNORECASE)
+                keys = re.findall(re.escape(_key), res, re.I)
             else:
-                res = re.sub(re.escape(_key),
-                             '<span class="trait">' + _key + '</span>', res, 0)
+                keys = re.findall(re.escape(_key), res)
+            keys = set(keys)
+            for key in keys:
+                res = res.replace(key, '<span class="trait">' + key + '</span>')
         if hasattr(self, '_values'):
             for _value in self._values:
                 if self._ignore:
-                    res = re.sub(re.escape(_value), '<span class="gene">' +
-                                 _value + '</span>', res, 0, re.IGNORECASE)
+                    keys = re.findall(re.escape(_value), res, re.I)
                 else:
-                    res = re.sub(
-                        re.escape(_value), '<span class="gene">' + _value + '</span>', res, 0)
+                    keys = re.findall(re.escape(_value), res)
+                keys = set(keys)
+                for key in keys:
+                    res = res.replace(key, '<span class="gene">' + key + '</span>')
         return res
 
     def add_keys(self, keys, values=None, ignore=False):
@@ -330,27 +332,21 @@ class OneFilePubmud(dict):
         else:
             if isinstance(key, (list, tuple, set)):
                 return [''.join(article.get(one)) for one in key]
-            return article.get(key)
+            return article.get(key)[0]
 
-    def yield_all(self, element="标题", need_pmid=False):
+    def yield_all(self, element="标题"):
         """通过key,yield出所有文章的value"""
-        if not isinstance(need_pmid, bool):
-            raise TypeError("第二个参数必须为bool值")
-
         for primary in self.keys():
-            yield self.get_element(primary, element, need_pmid)
+            yield self.get_element(primary, element)
 
-    def get_all(self, element="标题", need_pmid=False):
+    def get_all(self, element="标题"):
         """通过key, 返回所有文章的value的list"""
-        if not isinstance(need_pmid, bool):
-            raise TypeError("第二个参数必须为bool值")
-
         tem = []
-        for value in self.yield_all(element, need_pmid):
-            tem.append('\n'.join(value))
+        for value in self.yield_all(element):
+            tem.append(value)
         return tem
 
-    def yield_element(self, primarys, element="标题", need_pmid=False):
+    def yield_element(self, primarys, element="标题"):
         """
         生成器, 生成文章具体信息
         :param primarys: 主键, 可以是单个主键或者多个主键的list, tuple, set
@@ -358,8 +354,6 @@ class OneFilePubmud(dict):
         :param need_pmid: 是否需要以PMID为前缀, bool型
         :return: 以列表形式返回
         """
-        if not isinstance(need_pmid, bool):
-            raise TypeError("need_pmid参数必须为bool型")
         if not isinstance(primarys, (list, tuple, set)):
             primarys = [primarys]
 
@@ -368,96 +362,94 @@ class OneFilePubmud(dict):
             if not value:
                 warnings.warn("没有得到%r文章的%r属性" % (primary, element))
             # 如果需要主键信息
-            elif need_pmid:
-                value = [primary + ": " + '\n'.join(value)]
             if value:
                 yield value
 
-    def get_element(self, primarys, element="标题", need_pmid=False):
+    def get_element(self, primarys, element="标题"):
         """
         :param primarys: 主键, 可以是单个主键或者多个主键的list, tuple, set
         :param element: 需要获得的类型, 默认为"标题", 可以是多个类型的list, tuple, set
         :param need_pmid: 是否需要以PMID为前缀, bool型
         :return: 一个结果列表
         """
-        if not isinstance(need_pmid, bool):
-            raise TypeError("need_pmid参数必须为bool型")
         if not isinstance(primarys, (list, tuple, set)):
             primarys = [primarys]
         tem = []
-        for value in self.yield_element(primarys, element, need_pmid):
-            tem.append('\n'.join(value))
+        for value in self.yield_element(primarys, element):
+            tem.append(value)
+        if len(tem) == 1:
+            tem = tem[0]
         return tem
 
-    def yield_content(self, pmids, need_pmid=False):
+    def yield_content(self, pmids):
         """实际调用yield_element, 但是第二个参数为"正文"
         """
-        return self.yield_element(pmids, "正文", need_pmid)
+        return self.yield_element(pmids, "正文")
 
-    def yield_summary(self, pmids, need_pmid=False):
+    def yield_summary(self, pmids):
         """实际调用yield_element, 但是第二个参数为"摘要"
         """
-        return self.yield_element(pmids, "摘要", need_pmid)
+        return self.yield_element(pmids, "摘要")
 
-    def yield_title(self, pmids, need_pmid=False):
+    def yield_title(self, pmids):
         """实际调用yield_element, 但是第二个参数为"标题"
         """
-        return self.yield_element(pmids, "标题", need_pmid)
+        return self.yield_element(pmids, "标题")
 
-    def yield_pmc(self, pmids, need_pmid=False):
+    def yield_pmc(self, pmids):
         """实际调用yield_element, 但是第二个参数为"PMCID"
         """
-        return self.yield_element(pmids, "PMCID", need_pmid)
+        return self.yield_element(pmids, "PMCID")
 
-    def yield_author(self, pmids, need_pmid=False):
+    def yield_author(self, pmids):
         """实际调用yield_element, 但是第二个参数为"作者"
         """
-        return self.yield_element(pmids, "作者", need_pmid)
+        return self.yield_element(pmids, "作者")
 
-    def yield_time(self, pmids, need_pmid=False):
+    def yield_time(self, pmids):
         """实际调用yield_element, 但是第二个参数为"时间"
         """
-        return self.yield_element(pmids, "时间", need_pmid)
+        return self.yield_element(pmids, "时间")
 
-    def yield_journal(self, pmids, need_pmid=False):
+    def yield_journal(self, pmids):
         """实际调用yield_element, 但是第二个参数为"期刊"
         """
-        return self.yield_element(pmids, "期刊", need_pmid)
+        return self.yield_element(pmids, "期刊")
 
-    def get_content(self, pmids, need_pmid=False):
+    def get_content(self, pmids):
         """实际调用get_element, 但是第二个参数为"正文"
         """
-        return self.get_element(pmids, "正文", need_pmid)
+        return self.get_element(pmids, "正文")
 
-    def get_summary(self, pmids, need_pmid=False):
+    def get_summary(self, pmids):
         """实际调用get_element, 但是第二个参数为"摘要"
         """
-        return self.get_element(pmids, "摘要", need_pmid)
+        return self.get_element(pmids, "摘要")
 
-    def get_title(self, pmids, need_pmid=False):
+    def get_title(self, pmids):
         """实际调用get_element, 但是第二个参数为"标题"
         """
-        return self.get_element(pmids, "标题", need_pmid)
+        return self.get_element(pmids, "标题")
 
-    def get_pmc(self, pmids, need_pmid=False):
+    def get_pmc(self, pmids):
         """实际调用get_element, 但是第二个参数为"PMCID"
         """
-        return self.get_element(pmids, "PMCID", need_pmid)
+        return self.get_element(pmids, "PMCID")
 
-    def get_author(self, pmids, need_pmid=False):
+    def get_author(self, pmids):
         """实际调用get_element, 但是第二个参数为"作者"
         """
-        return self.get_element(pmids, "作者", need_pmid)
+        return self.get_element(pmids, "作者")
 
-    def get_time(self, pmids, need_pmid=False):
+    def get_time(self, pmids):
         """实际调用get_element, 但是第二个参数为"时间"
         """
-        return self.get_element(pmids, "时间", need_pmid)
+        return self.get_element(pmids, "时间")
 
-    def get_journal(self, pmids, need_pmid=False):
+    def get_journal(self, pmids):
         """实际调用get_element, 但是第二个参数为"期刊"
         """
-        return self.get_element(pmids, "期刊", need_pmid)
+        return self.get_element(pmids, "期刊")
 
     def copy(self):
         """复制一个实例"""
@@ -489,10 +481,12 @@ class OneFilePubmud(dict):
         """创建自身实例文章的HTML, summary_html是模板的str, 默认找template/summary.model
         会在本地创建HTML文件夹, 实际是一个生成器, 返回主键和HTML内容的元组
         """
-        if summary_html:
-            if not isinstance(summary_html, str):
-                raise TypeError("摘要模板类型必须是str")
+        if summary_html is None:
             summary_tem = create_template('summary.model')
+        elif not isinstance(summary_html, str):
+            raise TypeError("摘要模板类型必须是str")
+        else:
+            summary_tem = create_template(summary_html)
 
         if not os.path.exists(os.getcwd() + "/HTML"):
             os.mkdir(os.getcwd() + "/HTML")
@@ -503,11 +497,11 @@ class OneFilePubmud(dict):
                 self._need_pmid = []
                 for key, article in self.yield_keys_values(keys, values, ignore):
                     self._need_pmid.append(key)
-                    yield key, make_summary(article, summary_html)
+                    yield key, make_summary(article, summary_tem)
             else:
                 for key, article in self.items():
                     self.add_keys(article, keys, values, ignore)
-                    yield key, make_summary(article, summary_html)
+                    yield key, make_summary(article, summary_tem)
         else:
             for key, article in self.items():
                 yield key, make_summary(article, summary_tem)
@@ -518,13 +512,13 @@ class OneFilePubmud(dict):
         """根据自身全部实例, 创建主页的HTML, 接收的参数是模板的str, 默认是/template/index.model
         返回主页的HTML内容
         """
-        if not isinstance(index_html, str):
+        if index_html is None:
+            index_tem = create_template('index.model')
+        elif not isinstance(index_html, str):
             raise TypeError("主页模板类型必须是str")
+        else:
+            index_tem = create_template(index_html)
 
-        if not index_html:
-            index_html = create_template('index.model')
-
-        index_tem = Templite(index_html)
         if filter_article:
             articles = []
             for pmid in self._need_pmid:
@@ -578,7 +572,7 @@ class OneFilePubmud(dict):
                     self._make_detail(app, key, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
         else:
             for pmid in self.yield_all("PMID"):
-                self._make_detail(app, pmid, keys, values, ignore)
+                self._make_detail(app, pmid, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
         if need_pmid:
             self._need_pmid = need_pmid
         self._make_index(app, need_pmid, filter_article, index_html=index_html)
