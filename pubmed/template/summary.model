@@ -214,10 +214,10 @@ article {
     <h2>文献标题:{{ article.to_str_title }}</h2>
     <h3>PMID:{{ article.to_str_pmid }}</h3>
     <p>
-        作者：{{ article.to_str_author }}
+        <span>作者</span>：{{ article.to_str_author }}
     <br/>{{ article.to_str_msg }}
         <br/>
-        年份：{{ article.to_str_time }}
+        <span>年份</span>：{{ article.to_str_time }}
         <br/>
     </p>
     <br/>

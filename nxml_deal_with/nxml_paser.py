@@ -43,7 +43,7 @@ def getRes(dir, path, goal):
                         line = line.split()
                         _content = deal_word(line, dir)
                         if "基" in _content and "关" in _content:
-                            Res.append("内容:"+_content+".\n")
+                            Res.append("正文:"+_content+".\n")
 
         if if_jump:
             continue

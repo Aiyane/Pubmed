@@ -95,6 +95,7 @@ from pubmed.templite import Templite
 from pubmed.serving import Jay, render_template_by_template
 from cgi import escape
 import re
+from pubmed.nxml_token import nxml_deal
 
 
 class Article(MultiDict):
@@ -114,7 +115,8 @@ class Article(MultiDict):
                 keys = re.findall(re.escape(_key), res)
             keys = set(keys)
             for key in keys:
-                res = res.replace(key, '<span class="trait">' + key + '</span>')
+                res = res.replace(
+                    key, '<span class="trait">' + key + '</span>')
         if hasattr(self, '_values'):
             for _value in self._values:
                 if self._ignore:
@@ -123,7 +125,8 @@ class Article(MultiDict):
                     keys = re.findall(re.escape(_value), res)
                 keys = set(keys)
                 for key in keys:
-                    res = res.replace(key, '<span class="gene">' + key + '</span>')
+                    res = res.replace(
+                        key, '<span class="gene">' + key + '</span>')
         return res
 
     def add_keys(self, keys, values=None, ignore=False):
@@ -144,7 +147,10 @@ class Article(MultiDict):
     def to_str(self, key):
         res = self.get(key)
         if res:
-            res = escape('. '.join(res))
+            if not self.nxml:
+                res = escape('. '.join(res))
+            else:
+                res = '. '.join(res)
             if self._has_keys:
                 res = self._find_keys(res)
             return res
@@ -179,6 +185,9 @@ class Article(MultiDict):
 
     def to_str_msg(self):
         return self.to_str("信息")
+
+    def to_str_content(self):
+        return self.to_str("正文")
 
 
 def add_path_info_to_article(file_path, article):
@@ -267,14 +276,24 @@ class OneFilePubmud(dict):
             raise FileNotFoundError("该%r文件不存在!" % path)
 
         article = Article()
+        is_nxml = False
+        if path.endswith('.nxml'):
+            my_deal_line = nxml_deal
+            is_nxml = True
+        else:
+            my_deal_line = deal_line
         # for line in lines:
-        for line in deal_line(path):
+        for line in my_deal_line(path):
             key, varlue = get_key_value_by_line(line)
             if key:
                 article.add(key, varlue)
             elif article:
                 if save_file_name:  # 如果是处理多文件, 添加额外的文件属性
                     article = add_path_info_to_article(path, article)
+                    if is_nxml:
+                        article.nxml = True
+                    else:
+                        article.nxml = False
                 try:
                     self.save_article(article)
                 except NotPrimaryException as msg:
@@ -331,8 +350,11 @@ class OneFilePubmud(dict):
             warnings.warn("没有%r对应的文章" % primary)
         else:
             if isinstance(key, (list, tuple, set)):
-                return [''.join(article.get(one)) for one in key]
-            return article.get(key)[0]
+                return [''.join(article.getlist(one)) for one in key]
+            value = article.get(key)
+            if value:
+                return value[0]
+            return ''
 
     def yield_all(self, element="标题"):
         """通过key,yield出所有文章的value"""
@@ -473,9 +495,22 @@ class OneFilePubmud(dict):
                 content = escape(''.join(content))
             if title:
                 title = escape(''.join(title))
-            if content or title:
-                if (content and '>' in article._find_keys(content)) or (title and '>' in article._find_keys(title)):
-                    yield key, article
+            main_con = article.get('正文')
+            if content or title or main_con:
+                if content:
+                    content = article._find_keys(content)
+                    if '>' in content:
+                        yield key, article
+                        continue
+                if title:
+                    title = article._find_keys(title)
+                    if '>' in title:
+                        yield key, article
+                        continue
+                if main_con:
+                    main_con = article._find_keys(main_con)
+                    if '<span class=' in main_con:
+                        yield key, article
 
     def make_summarys(self, summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
         """创建自身实例文章的HTML, summary_html是模板的str, 默认找template/summary.model
@@ -542,37 +577,58 @@ class OneFilePubmud(dict):
         :param make_html: 是否生成html文件, bool值
         """
         if not make_html:
-            return self.make_server(index_html=index_html, summary_html=summary_html, keys=keys, values=values, ignore=ignore, filter_article=filter_article)
-        
+            return self.make_server(index_html=index_html, summary_html=summary_html, keys=keys,
+                                    values=values, ignore=ignore, filter_article=filter_article)
+
         for key, article in self.make_summarys(summary_html, keys, values, ignore, filter_article):
             create_file(article, os.getcwd() + "/HTML/" + key + ".html")
 
         index_txt = self.make_index(index_html, filter_article=filter_article)
         create_file(index_txt, os.getcwd() + "/index.html")
 
-    def make_server(self, index_html=None, summary_html=None, keys=None, values=None, ignore=False, filter_article=False):
+    def load_static(self, app):
+        @app.route('/js/jquery.js')
+        def index():
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/js/jquery.js") as fin:
+                text = fin.read()
+            return text
+
+    def make_server(self, index_html=None, summary_html=None, content_html=None, keys=None, values=None, ignore=False,
+                    filter_article=False):
         """创建本地服务器"""
         app = Jay()
         need_pmid = []
+        self.load_static(app)
 
         if index_html is None:
             index_html = create_template('index.model')
         if summary_html is None:
             summary_html = create_template('summary.model')
+        if content_html is None:
+            content_html = create_template('content.model')
 
         if keys:
             if filter_article:
                 for key, article in self.yield_keys_values(keys, values, ignore):
                     need_pmid.append(key)
-                    self._make_detail(app, key, summary_html=summary_html, article=article)
+                    self._make_detail(
+                        app, key, summary_html=summary_html, article=article)
+                    self._make_detail(
+                        app, key, content_html=content_html, article=article)
             else:
                 for key, article in self.items():
                     article = self[key]
                     self.add_keys(article, keys, values, ignore)
-                    self._make_detail(app, key, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
+                    self._make_detail(
+                        app, key, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
+                    self._make_detail(
+                        app, key, keys=keys, values=values, ignore=ignore, content_html=content_html)
         else:
             for pmid in self.yield_all("PMID"):
-                self._make_detail(app, pmid, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
+                self._make_detail(app, pmid, keys=keys, values=values,
+                                  ignore=ignore, summary_html=summary_html)
+                self._make_detail(app, pmid, keys=keys, values=values,
+                                  ignore=ignore, content_html=content_html)
         if need_pmid:
             self._need_pmid = need_pmid
         self._make_index(app, need_pmid, filter_article, index_html=index_html)
@@ -592,17 +648,25 @@ class OneFilePubmud(dict):
                 articles = self.values()
             return render_template_by_template(index_html, articles=articles)
 
-
-    def _make_detail(self, app, pmid, summary_html, keys=None, values=None, ignore=False, article=None):
+    def _make_detail(self, app, pmid, summary_html=None, keys=None, values=None, ignore=False, article=None, content_html=None):
         """注册创建文章详情页
         """
-        @app.route('/HTML/' + ''.join(pmid) + '.html')
+        if content_html is not None:
+            route = '/HTML/content/' + ''.join(pmid) + '.html'
+        else:
+            route = '/HTML/' + ''.join(pmid) + '.html'
+
+        @app.route(route)
         def index():
             if article:
+                if content_html:
+                    return render_template_by_template(content_html, article=article)
                 return render_template_by_template(summary_html, article=article)
             my_article = self[''.join(pmid)]
             if keys:
                 my_article.add_keys(keys, values, ignore)
+            if content_html:
+                return render_template_by_template(content_html, article=my_article)
             return render_template_by_template(summary_html, article=my_article)
 
 
@@ -660,7 +724,7 @@ class MultiFilePubmud(OneFilePubmud):
                 raise NotADirectoryError("没有发现此文件夹")
             all_files = os.listdir(path)
             for file in all_files:
-                if file.endswith(".txt"):
+                if file.endswith(".txt") or file.endswith('.nxml'):
                     _tem = OneFilePubmud(path + "/" + file, True)
                     self.update(_tem)
         else:

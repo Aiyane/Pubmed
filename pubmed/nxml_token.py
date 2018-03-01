@@ -1,8 +1,11 @@
+#!/usr/bin/python3
 # coding: utf-8
 from types import GeneratorType
+import re
+import os
 
 
-def _tokenizer(lines, root=None):
+def _tokenizer(lines):
     fence = False
     pmc_close = True
     pmid_close = True
@@ -16,38 +19,38 @@ def _tokenizer(lines, root=None):
     for line in lines:
         if fence:
             if line.startswith('</abstract>'):
-                yield ZaiToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 is_zai = True
                 continue
             elif line.startswith('</article-id>'):
-                yield IDToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 continue
             elif line.startswith('</journal-title>'):
-                yield JouToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 continue
             elif line.startswith('</article-title>'):
-                yield TitleToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 continue
             elif line.startswith('</date>'):
-                yield TimeToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 continue
             elif line.startswith('</contrib-group>'):
-                yield AuthorToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 continue
             elif is_zai and line.startswith('</p>'):
-                yield ContentToken(buffer)
+                yield ''.join(buffer)
                 buffer.clear()
                 fence = False
                 continue
@@ -83,68 +86,20 @@ def _tokenizer(lines, root=None):
             buffer.append("作者:")
             fence = True
         elif line.startswith('<p>'):
+            buffer.append("正文:")
             fence = True
 
 
-class AllDoc(object):
-    def __init__(self, lines):
-        self._kid = tuple(line for line in _tokenizer(lines, root=self))
-
-    @property
-    def kid(self):
-        if isinstance(self._kid, GeneratorType):
-            self._kid = tuple(self._kid)
-        return self._kid
-        
-
-class IDToken(object):
-    def __init__(self, lines):
-        self.content = ' '.join(lines)
-       
-
-class JouToken(object):
-    def __init__(self, lines):
-        self.content = ' '.join(lines)
-        
-    
-class TitleToken(object):
-    def __init__(self, lines):
-        self.content = ' '.join(lines)
-    
-
-class TimeToken(object):
-    def __init__(self, lines):
-        self.content = ' '.join(lines)
-        
-        
-class AuthorToken(object):
-    def __init__(self, lines):
-        self.content = ' '.join(lines)
-        
-
-class ContentToken(object):
-    def __init__(self, lines):
-        content = ' '.join(lines)
-        content = content.split(".")
-        self.content = content
+def init_deal(text):
+    return re.split(r'(?s)(<.*?>)', text)
 
 
-class ZaiToken(object):
-    def __init__(self, lines):
-        self.content = ' '.join(lines)
+def nxml_deal(path):
+    if not os.path.isfile(path) or not path.endswith(".nxml"):
+        raise FileNotFoundError("%r文件不存在", path)
 
-# if __name__ == '__main__':
-#     import re, os
-#     all_file = os.listdir("C:\\Users\\Administrator\\Desktop\\nxml全文")
-#     for file in all_file:
-#         zai = False
-#         with open("C:\\Users\\Administrator\\Desktop\\nxml全文\\"+file, "r", encoding="utf8") as fin:
-#             lines = re.split(r'(?s)(<.*?>)', fin.read())
-#             AST = AllDoc(lines)
-#         with open("C:\\Users\\Administrator\\Desktop\\nxml_res\\"+file, "w", encoding="utf8") as f:
-#             for token in AST.kid:
-#                 if isinstance(token, ZaiToken):
-#                     f.write(token.content)
-#                     zai = True
-#         if not zai:
-#             print(file)
+    with open(path, "r", encoding="utf8") as fin:
+        text = fin.read()
+    for line in _tokenizer(init_deal(text)):
+        yield line
+    yield '\n'

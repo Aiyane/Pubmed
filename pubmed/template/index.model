@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Index</title>
-	<script src="./js/jquery.js"></script>
+	<script src="../js/jquery.js"></script>
 	<script type="text/javascript">
 		(function($){
 			$.fn.tableUI = function(options){
@@ -61,6 +61,7 @@
 		  <th>PMCID</th>
 		  <th>TITLE</th>
 		  <th>ADSTRACT</th>
+		  <th>FULL TEXT</th>
 		  <th>AUTHOR</th>
 		  <th>TIME</th>
 		  <th>HOME</th>
@@ -73,6 +74,7 @@
 			  <td>{{ article.to_str_pmcid }}</td>
 			  <td>{{ article.to_str_title }}</td>
 			  <td><a href="./HTML/{{ article.to_str_pmid }}.html" target="_blank">摘要</a></td>
+			  <td><a href="./HTML/content/{{ article.to_str_pmid }}.html" target="_blank">正文</a></td>
 			  <td>{{ article.to_str_author }}</td>
 			  <td>{{ article.to_str_time }}</td>
 			  <td>{{ article.to_str_home }}</td>

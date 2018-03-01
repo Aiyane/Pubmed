@@ -10,7 +10,6 @@ def init_txt(file_path):
     with open(file_path, "r", encoding="utf8") as fin:
         lines = fin.readlines()
 
-    # article = []
     tem_line = ''
     for line in lines:
         if line.strip() == "":
