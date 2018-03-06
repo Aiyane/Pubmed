@@ -586,10 +586,10 @@ class OneFilePubmud(dict):
         index_txt = self.make_index(index_html, filter_article=filter_article)
         create_file(index_txt, os.getcwd() + "/index.html")
 
-    def load_static(self, app):
-        @app.route('/js/jquery.js')
+    def load_static(self, app, path=None):
+        @app.route(path)
         def index():
-            with open(os.path.split(os.path.realpath(__file__))[0] + "/js/jquery.js") as fin:
+            with open(os.path.split(os.path.realpath(__file__))[0] + path) as fin:
                 text = fin.read()
             return text
 
@@ -598,7 +598,7 @@ class OneFilePubmud(dict):
         """创建本地服务器"""
         app = Jay()
         need_pmid = []
-        self.load_static(app)
+        self.load_static(app, "/js/jquery.js")
 
         if index_html is None:
             index_html = create_template('index.model')
