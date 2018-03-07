@@ -288,4 +288,7 @@ root = OneFilePubmed(articles)
 ```
 
 这样root中的文章就全是包含关键词的了. 以下是一个[例子](http://onqow625k.bkt.clouddn.com/%E5%B1%8F%E5%B9%95%E5%BD%95%E5%83%8F%202018-02-24%2013:35:15.mp4)
-![](http://onqow625k.bkt.clouddn.com/50d63d8a-00b0-4cf7-9acd-3dee46bebcfb.gif)
+
+#### 关于nxml文件的解析
+
+全文其实比摘要更加重要, 但是pdf里的文字抓取困难, 转换后又会缺少重要信息或者断行, 断句. 所以一般处理的是nxml格式的全文, 对于这种格式, 这里的nxml_token.py就是来解析它的, 你可以不需要做任何改变的使用这个工具, 就像之前解析摘要那样. 它会根据你文件的后缀判断出这个nxml还是txt普通文本. 所以注意后缀的正确性.

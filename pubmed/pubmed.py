@@ -1,92 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-处理的文件: 合并后的摘要, 即全文与摘要都在都处理了的, 在没有摘要只有全文的文章里, 关键字以内容开头
-在有摘要有全文的文章里, 关键字以内容为摘要以正文为全文, 在只有摘要的文章里, 摘要以内容为关键字
-目标: 构建摘要的树型结构使得以后可以当作基础数据结构直接调用解析
-
-一个简单的应用例子:
-
-    from getSummary import OneFilePubmud
-
-    path = "C:/Users/Administrator/Desktop/摘要文件.txt"
-    summary = OneFilePubmud(path)
-
-    # 提供的方法, 这里的 "xxx" 可以替换成 "标题", "摘要", "时间", "作者", "期刊", "PMCID", "正文", 不填就默认为 "标题"
-    summary.get_element('15067400', "xxx")  # 通过pmid得到元素,
-    summary.get_element(['15067400', '15067400'], "xxx") # 通过list得到元素
-    summary.get_element(('15067400', '15067400'), "xxx") # 通过tuple得到元素
-    summary.get_element({'15067400', '15067401'}, "xxx") # 通过set得到元素
-
-    summary.get_summary('15067400')  # 通过pmid获取摘要
-    summary.get_summary(['15067400', '15067400'])  # 通过pmid列表获取摘要
-    summary.get_summary(('15067400', '15067400'))  # 通过pmid集合获取摘要
-
-    summary.get_content()  # 通过pmid获取正文(筛选出来的正文), 用法同摘要
-    summart.get_pmc()  # 通过pmid获取pmcid, 用法同摘要
-    summary.get_author()  # 通过pmid获取作者, 用法同摘要
-    summary.get_title()  # 通过pmid获取标题, 用法同摘要
-    summary.get_time()  # 通过pmid获取时间, 用法同摘要
-    summary.get_journal()  # 通过pmid获取期刊, 用法同摘要
-    # 以上函数都有第三个参数, 接收布尔值, 表明是否需要将"{pmid}: "作为开头一同返回, 即 key: value 格式返回
-
-    summary['15067400']  # 显示一篇文章的全部信息
-
-    summary['15067400']["内容"]  # 显示一篇文章的摘要
-    summary['15067400']["时间"]  # 显示一篇文章的时间
-    summary['15067400']["标题"]  # 显示一篇文章的标题
-    summary['15067400']["正文"]  # 显示一篇文章的正文
-    summary['15067400']["PMCID"]  # 显示一篇文章的PMCID
-    summary['15067400']["期刊"]  # 显示一篇文章的期刊
-    summary['15067400']["PMID"]  # 显示一篇文章的PMID
-    summary['15067400']["作者"]  # 显示一篇文章的作者
-
-    # 与上面类似的为有yield_element()方法, 区别是上述方法返回一个列表, 而yield开头的方法是一个生成器, 用于for循环,
-    # 可以一个个的得到这些值而不是得到一个庞大的list占内存, 以下是用法, 第一个参数可接受list, tuple, set当然还有单个pmid字符串
-    # 这里的 "xxx" 可以替换成 "标题", "摘要", "时间", "作者", "期刊", "PMCID", "正文", 不填就默认为 "标题"
-    for title in summary.yield_element(['15067400', '15067401'], "xxx"):
-        print(title)
-    # 同理以下也是生成器
-    summary.yield_content()
-    summary.yield_time()
-    summary.yield_journal()
-    summary.yield_summary()
-    summary.yield_pmc()
-    summary.yield_author()
-    summary.yield_title()
-
-    summary.path  # 为单文件路径
-    summary.file_name  # 为单文件名
-    summary.no_dot_file_name  # 为无后缀文件名
-
-    new_sum = OneFilePubmud(summary)  # 这样拷贝summary
-    new_sum = OneFilePubmud.copy()  # 或者调用此方法
-
-    # 当然把这个类当作普通的字典也完全可以
-    my_dict = OneFilePubmud({"key": "value", "key2": "value2"})
-    # 所以可以看出此类初始化参数类型可以是
-    # 1. 文件路径字符串类型
-    # 2. OneFilePubmud类型
-    # 3. dict类型
-
-MultiFilePubmud类的用法与OneFilePubmud的用法基本一致, 区别在于初始化的参数为
-1. 文件夹路径字符串类型
-2. OneFilePubmud类型
-3. MultiFilePubmud类型
-4. dict类型
-
-另外MultiFilePubmud的实例没有 "path", "file_name", "no_dot_file_name" 三个key, 但是可以对每一篇文章查找这些key,
-以下是例子:
-    from getSummary import MultiFilePubmud
-
-    path = "C:/Users/Administrator/Desktop/摘要文件夹"
-    summary = MultiFilePubmud(path)
-
-    summary['15067400'].path  # 这是此文章的全路径
-    summary['15067400'].file_name  # 这是此文章的文件名
-    summary['15067400'].no_dot_file_name  # 这是此文章无后缀文件名
-
-"""
 from pubmed.wrappers import MultiDict
 import os
 from pubmed.init_txt import deal_line
@@ -277,11 +190,14 @@ class OneFilePubmud(dict):
 
         article = Article()
         is_nxml = False
+
+        # 这里判断处理的是nxml还是普通的摘要txt文件
         if path.endswith('.nxml'):
             my_deal_line = nxml_deal
             is_nxml = True
         else:
             my_deal_line = deal_line
+
         # for line in lines:
         for line in my_deal_line(path):
             key, varlue = get_key_value_by_line(line)
@@ -587,52 +503,54 @@ class OneFilePubmud(dict):
         create_file(index_txt, os.getcwd() + "/index.html")
 
     def load_static(self, app, path=None):
+        """
+        加载静态文件
+        """
         @app.route(path)
         def index():
             with open(os.path.split(os.path.realpath(__file__))[0] + path) as fin:
                 text = fin.read()
             return text
 
-    def make_server(self, index_html=None, summary_html=None, content_html=None, keys=None, values=None, ignore=False,
-                    filter_article=False):
+    def make_server(self, index_html=None, summary_html=None, content_html=None, keys=None,
+                    values=None, ignore=False, filter_article=False):
         """创建本地服务器"""
         app = Jay()
         need_pmid = []
         self.load_static(app, "/js/jquery.js")
 
-        if index_html is None:
-            index_html = create_template('index.model')
-        if summary_html is None:
-            summary_html = create_template('summary.model')
-        if content_html is None:
-            content_html = create_template('content.model')
+        index_html = create_index_html(index_html)
+        summary_html = create_summary_html(summary_html)
+        content_html = create_content_html(content_html)
 
         if keys:
             if filter_article:
                 for key, article in self.yield_keys_values(keys, values, ignore):
                     need_pmid.append(key)
-                    self._make_detail(
-                        app, key, summary_html=summary_html, article=article)
-                    self._make_detail(
-                        app, key, content_html=content_html, article=article)
+                    self.create_summary_content(
+                        app, key, summary_html=summary_html, article=article, content_html=content_html)
             else:
                 for key, article in self.items():
                     article = self[key]
                     self.add_keys(article, keys, values, ignore)
-                    self._make_detail(
-                        app, key, keys=keys, values=values, ignore=ignore, summary_html=summary_html)
-                    self._make_detail(
-                        app, key, keys=keys, values=values, ignore=ignore, content_html=content_html)
+                    self.create_summary_content(
+                        app, key, keys=keys, values=values, ignore=ignore,
+                        summary_html=summary_html, content_html=content_html)
         else:
             for pmid in self.yield_all("PMID"):
-                self._make_detail(app, pmid, keys=keys, values=values,
-                                  ignore=ignore, summary_html=summary_html)
-                self._make_detail(app, pmid, keys=keys, values=values,
-                                  ignore=ignore, content_html=content_html)
+                self.create_summary_content(app, pmid, keys=keys, values=values,
+                                            ignore=ignore, summary_html=summary_html, content_html=content_html)
         if need_pmid:
             self._need_pmid = need_pmid
         self._make_index(app, need_pmid, filter_article, index_html=index_html)
         app.run()
+
+    def create_summary_content(self, app, pmid, keys=None, values=None,
+                               ignore=False, article=None, summary_html=None, content_html=None):
+        self._make_detail(app, pmid, keys=keys, values=values, ignore=ignore,
+                          article=article, summary_html=summary_html)
+        self._make_detail(app, pmid, keys=keys, values=values, ignore=ignore,
+                          article=article, content_html=content_html)
 
     def _make_index(self, app, need_pmid, filter_article, index_html):
         """注册主页
@@ -668,6 +586,24 @@ class OneFilePubmud(dict):
             if content_html:
                 return render_template_by_template(content_html, article=my_article)
             return render_template_by_template(summary_html, article=my_article)
+
+
+def create_index_html(index_html):
+    if index_html is None:
+        return create_template('index.model')
+    return index_html
+
+
+def create_summary_html(summary_html):
+    if summary_html is None:
+        return create_template('summary.model')
+    return summary_html
+
+
+def create_content_html(content_html):
+    if content_html is None:
+        return create_template('content.model')
+    return content_html
 
 
 def create_template(html_name):

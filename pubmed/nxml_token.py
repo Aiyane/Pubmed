@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 # coding: utf-8
+"""
+这一个文件处理的是nxml文件的解析
+"""
 from types import GeneratorType
 import re
 import os
