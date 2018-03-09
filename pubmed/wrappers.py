@@ -9,6 +9,7 @@ class _Missing(object):
     def __reduce__(self):
         return '_missing'
 
+
 _missing = _Missing()
 
 
@@ -16,6 +17,7 @@ class TypeConversionDict(dict):
     """
     提供一个get方法, 于普通字典不同的是该get方法可以转换类型
     """
+
     def get(self, key, default=None, type=None):
         try:
             value = self[key]
@@ -255,6 +257,7 @@ def is_immutable(self):
 
 class ImmutableDictMixin(object):
     """不可变的字典"""
+
     def __reduce_ex__(self, protocol):
         return type(self), (dict(self),)
 

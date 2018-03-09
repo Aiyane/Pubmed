@@ -60,7 +60,7 @@ class Article(MultiDict):
     def to_str(self, key):
         res = self.get(key)
         if res:
-            if not self.nxml:
+            if not hasattr(self, "nxml"):
                 res = escape('. '.join(res))
             else:
                 res = '. '.join(res)
