@@ -4,6 +4,10 @@ import re
 
 
 def init_txt(file_path):
+    """
+    处理断行. 将每一块以一行的形式返回
+    file_path: 文件路径
+    """
     if not os.path.isfile(file_path):
         raise FileNotFoundError("没有%r文件" % file_path)
 

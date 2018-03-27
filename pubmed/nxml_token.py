@@ -9,6 +9,10 @@ import os
 
 
 def _tokenizer(lines):
+    """
+    nxml是一种类似于html的格式, 在能下载的nxml全文的文件中, 
+    pmid, pmcid, 作者, 期刊等信息有着相应的标签, 根据此区分
+    """
     fence = False
     pmc_close = True
     pmid_close = True
