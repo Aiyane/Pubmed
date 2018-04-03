@@ -18,7 +18,6 @@ def getXing():
 def getGene():  # 全部的基因名字
     with open(all_gene_file, 'r', encoding="utf8") as fin:
         for line in fin.readlines():
-            # if not re.match(r'Glyma\d{2}[gG]\d+(\.\d*)?', line) and len(line) > 2:
             if len(line) > 2:
                 yield line.strip()
 
@@ -30,18 +29,13 @@ pattern_list = [
     r'SAMN\d{8}',
     r'BAN.{3}g\d{5}D',
     r'MYB\d+',
-    # r'Glyma\.\d{2}[Gg]\d{6}',
     r'GSBRNA2T\d{11}',
     r'WBb.{5}\.\d{2}',
     r'P0.{6}\.\d{2}',
-    # r'Gm-BamyTkm\d',
-    # r'Gm-Bamy.{3}',
     r'EF1Bgamma\d',
     r'LOC\d{5}',
     r'HSP\d{2}(\.)+\d-.',
     r'GlmaxMp\d{2}',
-    # r'GmFAD2-.{2}',
-    # r'GmMYB29.{2}',
     r'Avh1b-.{3}',
     r'At1g\d{5}',
     r'G[Mm].+',
@@ -49,7 +43,7 @@ pattern_list = [
 
 
 # need_gene 全部基因的字典
-need_gene = {(k.lower(), k) for k in getGene()}
+need_gene = {(k, k) for k in getGene()}
 # need_xing 全部性状的字典
 need_xing = {(k.lower(), k) for k in getXing()}
 # re_list 全部的正则
@@ -61,19 +55,13 @@ def deal_word(words, is_title=False):
 
     if is_title:
         # 如果是标题, 进行第一个单词首字母模糊匹配
-        head = words[0][0].lower()
-        Head = head + words[0][1:]
-        try:
-            if need_gene[Head]:
-                _word = "基因$" + words[0] + "$基因"
-                buffer.append(_word)
-        except KeyError:
-            try:
-                if need_gene[words[0]]:
-                    _word = "基因$" + words[0] + "$基因"
-                    buffer.append(_word)
-            except KeyError:
-                buffer.append(words[0])
+        Head = words[0][0].lower() + words[0][1:]
+        if need_gene.get(Head):
+            buffer.append("基因$" + words[0] + "$基因")
+        elif need_gene.get(words[0]):
+            buffer.append("基因$" + words[0] + "$基因")
+        else:
+            buffer.append(words[0])
         words = words[1:]
 
     for word in words:
@@ -83,9 +71,9 @@ def deal_word(words, is_title=False):
                 break
         else:
             if need_gene.get(word):
-                word = "关键字$" + word + "$关键字"
+                word = "基因$" + word + "$基因"
             elif need_xing.get(word.strip(string.punctuation).lower()):
-                word = "关键字$" + word + "$关键字"
+                word = "性状$" + word + "$性状"
         buffer.append(word)
 
     return ' '.join(buffer)
