@@ -9,6 +9,17 @@ from pubmed.serving import Jay, render_template_by_template
 from cgi import escape
 import re
 from pubmed.nxml_token import nxml_deal
+import string
+
+
+def change_words(content, keys, span):
+    res = []
+    for word in content.split():
+        if word.strip(string.punctuation) in (keys):
+            res.append(span + word + '</span>')
+        else:
+            res.append(word)
+    return ' '.join(res)
 
 
 class Article(MultiDict):
@@ -29,9 +40,10 @@ class Article(MultiDict):
                 keys = re.findall(re.escape(_key), res)
             if keys:
                 keys = set(keys)
-                for key in keys:
-                    res = res.replace(
-                        key, '<span class="trait">' + key + '</span>')
+                res = change_words(res, keys, '<span class="trait">')
+                # for key in keys:
+                #     res = res.replace(
+                #         key, '<span class="trait">' + key + '</span>')
                 has_key = True
 
         if not has_key:
@@ -44,9 +56,10 @@ class Article(MultiDict):
                 else:
                     keys = re.findall(re.escape(_value), res)
                 keys = set(keys)
-                for key in keys:
-                    res = res.replace(
-                        key, '<span class="gene">' + key + '</span>')
+                res = change_words(res, keys, '<span class="gene">')
+                # for key in keys:
+                #     res = res.replace(
+                #         key, '<span class="gene">' + key + '</span>')
         return res
 
     def add_keys(self, keys, values=None, ignore=False):

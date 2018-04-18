@@ -58,10 +58,6 @@ def deal_word(words, is_title=False):
     all_trait = []
     if is_title:
         Head = words[0][0].lower() + words[0][1:]
-        # if need_gene.get(Head):
-        #     all_gene.append(words[0])
-        # elif need_gene.get(words[0]):
-        #     all_gene.append(words[0])
         words = words[1:]
 
     for word in words:
@@ -70,8 +66,6 @@ def deal_word(words, is_title=False):
                 all_gene.append(word.strip(string.punctuation))
                 break
         else:
-            # if need_gene.get(word):
-            #     all_gene.append(word)
             if need_xing.get(word.strip(string.punctuation).lower()):
                 all_trait.append(word.strip(string.punctuation).lower())
 
