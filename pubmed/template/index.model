@@ -57,6 +57,7 @@
 <body>
 	<table class="table_solid">
 	  <tr>	  													
+	  	  <th>大类</th>
 		  <th>PMID</th>
 		  <th>PMCID</th>
 		  <th>TITLE</th>
@@ -70,6 +71,7 @@
 	  </tr>
 	  {% for article in articles %}
 		  <tr>
+		      <td>{{ article.to_str_trait }}</td>
 			  <td>{{ article.to_str_pmid }}</td>
 			  <td>{{ article.to_str_pmcid }}</td>
 			  <td>{{ article.to_str_title }}</td>

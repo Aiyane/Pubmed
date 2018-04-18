@@ -21,15 +21,22 @@ class Article(MultiDict):
         :res: 处理的字符串
         return: 返回处理完毕字符串
         """
+        has_key = False
         for _key in self._keys:
             if self._ignore:
                 keys = re.findall(re.escape(_key), res, re.I)
             else:
                 keys = re.findall(re.escape(_key), res)
-            keys = set(keys)
-            for key in keys:
-                res = res.replace(
-                    key, '<span class="trait">' + key + '</span>')
+            if keys:
+                keys = set(keys)
+                for key in keys:
+                    res = res.replace(
+                        key, '<span class="trait">' + key + '</span>')
+                has_key = True
+
+        if not has_key:
+            return res
+
         if hasattr(self, '_values'):
             for _value in self._values:
                 if self._ignore:
@@ -102,6 +109,9 @@ class Article(MultiDict):
     def to_str_content(self):
         return self.to_str("正文")
 
+    def to_str_trait(self):
+        return self.to_str("大类")
+
 
 def add_path_info_to_article(file_path, article):
     """
@@ -150,7 +160,7 @@ class NotPrimaryException(AttributeError):
 
 
 class OneFilePubmud(dict):
-    def __init__(self, path, save_file_name=False):
+    def __init__(self, path, save_file_name=False, trait=None):
         """
         一个Pubmed摘要文件的处理类
         :param path: 摘要文件
@@ -163,7 +173,7 @@ class OneFilePubmud(dict):
         elif isinstance(path, str):
             if not os.path.isfile(path):
                 raise FileNotFoundError("该路径%r不存在文件!" % path)
-            self._init_deal_path(path, save_file_name)
+            self._init_deal_path(path, save_file_name, trait)
             if not save_file_name:  # 如果父类调用来处理多文件, 不应该添加此属性
                 self.path = path
                 if "/" in path:
@@ -179,7 +189,7 @@ class OneFilePubmud(dict):
                             "2. OneFilePubmud类型"
                             "3. dict类型")
 
-    def _init_deal_path(self, path, save_file_name):
+    def _init_deal_path(self, path, save_file_name, trait):
         """
         处理path路径下的文章初始化
         :param path: 文件路径
@@ -210,6 +220,8 @@ class OneFilePubmud(dict):
                         article.nxml = True
                     else:
                         article.nxml = False
+                if trait:
+                    article.add('大类', trait)
                 try:
                     self.save_article(article)
                 except NotPrimaryException as msg:
@@ -646,7 +658,7 @@ def create_file(text, path):
 
 
 class MultiFilePubmud(OneFilePubmud):
-    def __init__(self, path):
+    def __init__(self, path, trait=False):
         """
         初始化多个文件, 即该文件夹的Pubmed信息
         :param path: 文件夹的绝对路径
@@ -661,7 +673,11 @@ class MultiFilePubmud(OneFilePubmud):
             all_files = os.listdir(path)
             for file in all_files:
                 if file.endswith(".txt") or file.endswith('.nxml'):
-                    _tem = OneFilePubmud(path + "/" + file, True)
+                    if trait:
+                        _tem = OneFilePubmud(
+                            path + "/" + file, True, file.split('.')[0])
+                    else:
+                        _tem = OneFilePubmud(path + "/" + file, True)
                     self.update(_tem)
         else:
             raise TypeError("初始化参数确保是以下之一"
