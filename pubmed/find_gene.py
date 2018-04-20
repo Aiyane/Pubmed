@@ -73,12 +73,10 @@ def deal_word(words, is_title=False):
 
 
 def get_gene_trait_root(file_path, trait=False):
-    is_multifile = False
     if os.path.isfile(file_path):
         root = OneFilePubmud(file_path)
     elif os.path.isdir(file_path):
         root = MultiFilePubmud(file_path, trait)
-        is_multifile = True
     else:
         raise NotADirectoryError("路径出错")
 
