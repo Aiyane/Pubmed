@@ -7,12 +7,12 @@ import re
 import os
 import string
 
-all_xing_file = "/home/aiyane/dir/全部性状.txt"
+all_trait_file = "/home/aiyane/dir/全部性状.txt"
 # all_gene_file = "/home/aiyane/dir/geneprimary.set.txt"
 
 
-def getXing():
-    with open(all_xing_file, "r", encoding="utf8") as fin:
+def getTrait():
+    with open(all_trait_file, "r", encoding="utf8") as fin:
         for line in fin.readlines():
             yield line.strip()
 
@@ -26,6 +26,8 @@ def getXing():
 
 pattern_list = [
     r'Glyma.*\d{2}[gG]\d+(\.\d*)?',
+    r'GlmaxMp\d{2}',
+    r'G[Mm].+',
     # r'LOC\d+',
     # r'Os\d{2}g\d{7}',
     # r'SAMN\d{8}',
@@ -37,18 +39,16 @@ pattern_list = [
     # r'EF1Bgamma\d',
     # r'LOC\d{5}',
     # r'HSP\d{2}(\.)+\d-.',
-    r'GlmaxMp\d{2}',
     # r'Avh1b-.{3}',
     # r'At1g\d{5}',
-    r'G[Mm].+',
 ]
 
 
 # need_gene 全部基因的字典
-# need_xing 全部性状的字典
+# need_trait 全部性状的字典
 # re_list 全部的正则
 # need_gene = dict((k, k) for k in getGene())
-need_xing = dict((k.lower(), k) for k in getXing())
+need_trait = dict((k.lower(), k) for k in getTrait())
 re_list = [re.compile(pattern) for pattern in pattern_list]
 
 
@@ -66,7 +66,7 @@ def deal_word(words, is_title=False):
                 all_gene.append(word.strip(string.punctuation))
                 break
         else:
-            if need_xing.get(word.strip(string.punctuation).lower()):
+            if need_trait.get(word.strip(string.punctuation).lower()):
                 all_trait.append(word.strip(string.punctuation).lower())
 
     return all_gene, all_trait

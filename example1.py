@@ -1,6 +1,7 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
 # find_gene_by_nltk.py
+# 该例子：获取所有含有基因单词的文章句子，以 pmid - [句子1, 句子2] 为返回结果
 import os
 import re
 
@@ -21,6 +22,10 @@ STOP_WORD = ('RNA', 'ABSTRACT', 'DNA', 'LAI', 'PROC', 'GLM', 'PROC', 'REG', 'T2'
 
 
 def have_feature(word):
+    """
+    word: 单词
+    ret: 是否有基因特征
+    """
     if word in STOP_WORD:
         return False
     # 全部大写
@@ -97,7 +102,7 @@ def fetch_gene_by_feature(content):
     return result
 
 
-def get_gene_sentence(file_path, trait):
+def get_gene_sentence(file_path, trai):
     if os.path.isfile(file_path):
         root = OneFilePubmud(file_path)
     elif os.path.isdir(file_path):
@@ -109,14 +114,27 @@ def get_gene_sentence(file_path, trait):
 
     for article, key, title in root.yield_all(["摘要", "PMID", "标题"]):
         if isinstance(article, list):
+            # 如果该标题有好几个文章
             article = '\n'.join(article)
+        
+        # 通过摘要选出需要的句子
         result = fetch_gene_by_feature(article)
+        # 通过标题选出需要的句子
         title_res = fetch_gene_by_feature(title)
+        # 上传标题中的结果
         if title_res:
             result.update(title_res)
+
+        # 如果有结果，以 PMID 为 key，结果为 value。上传键值对，输出打印信息
         if result:
             res[key] = result
             print('在PMID为:', key, "的文章中")
             print(result)
 
-    return res, root
+    return res
+
+def main():
+    get_gene_sentence("you/path/about/pubmed/files")
+
+if __name__ == '__main__':
+    main()
